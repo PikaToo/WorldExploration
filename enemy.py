@@ -1,10 +1,13 @@
 import pygame
 import random
-from entity import Entity
+from entity import Entity       # enemies are entities 
+from bullet import Bullet       # enemies can make bullets
 
 class Enemy(Entity):
+
+    # list of all enemies
     enemies = []
-    # used to add an enemy to the list of enemies
+
     def __init__(self, x_pos, y_pos, color, size, counter, enemy_ai, enemy_health, boss, other, damage):
         super().__init__(x_pos, y_pos, size, color, 0, 0)   # x, y velocities start at 0
         self.counter = counter
@@ -26,9 +29,6 @@ class Enemy(Entity):
         if self.ai == "Harmer":
             self.gold = 25
         
-        self.fired = False
-        self.fire_info = (0, 0, 0, 0, 0, 0)
-
         Entity.enemies.append(self)
 
     def move(self, player_rect, platform_list):
@@ -58,8 +58,8 @@ class Enemy(Entity):
 
                     x_vector = x_diff / (abs(x_diff) + abs(y_diff))  # getting how much of x is in x + y
                     y_vector = y_diff / (abs(x_diff) + abs(y_diff))  # getting how much of y is in x + y
-                    self.fired = True
-                    self.fire_info = self.rect.x + 9, self.rect.y + 9, x_vector * 20, y_vector * 20, "enemy", 12, 0
+                    Bullet(self.rect.x + 9, self.rect.y + 9, x_vector * 20, y_vector * 20, "enemy", 12, 0, self.damage)
+                
                 self.counter = 0
 
         if self.ai == "Bird":
@@ -102,8 +102,7 @@ class Enemy(Entity):
             if self.x_velocity < -8:
                 self.x_velocity += 1
             if self.counter > 100:                          # shooting
-                self.fired = True
-                self.fire_info = self.rect.x + 9, self.rect.y + 9, random.randint(-5, 5), -5, "enemy", 12, 0.3
+                Bullet(self.rect.x + 9, self.rect.y + 9, random.randint(-5, 5), -5, "enemy", 12, 0.3, self.damage)
             if self.counter == 110:                 # reset
                 self.counter = 0
 
@@ -123,8 +122,7 @@ class Enemy(Entity):
                     x = -1
                 self.x_velocity = 4*x
             if self.counter == 100:                          # shooting
-                self.fired = True
-                self.fire_info = self.rect.x + 9, self.rect.y + 9, 0, 0, "enemy", 12, 0.3
+                Bullet(self.rect.x + 9, self.rect.y + 9, 0, 0, "enemy", 12, 0.3, self.damage)
                 self.counter = 0
 
             # x-movement
@@ -178,10 +176,8 @@ class Enemy(Entity):
                 y_vector = (player_y_distance-540)/60
                 
                 # bullets still always some off. probably due to pygame rounding and some calculation
-                # errors on my side.
-
-                self.fired = True
-                self.fire_info = self.rect.x + 10, self.rect.y + 10, x_vector, y_vector, "enemy", 20, 0.3
+                #   errors on my side.
+                Bullet(self.rect.x + 10, self.rect.y + 10, x_vector, y_vector, "enemy", 20, 0.3, self.damage)
                 self.counter = 0
             
         # default x-movement
@@ -225,18 +221,6 @@ class Enemy(Entity):
 
         back_bar = pygame.Rect(bar_x_pos, bar_y_pos, bar_x_width, bar_y_width)
         front_bar = pygame.Rect(bar_x_pos, bar_y_pos, bar_x_width * self.current_health / self.max_health, bar_y_width)
-
-        # old system:
-        # m = 0
-        # if self.boss_status != -1:
-        #     m = self.rect.width
-        # bar_height = 5 + (self.healths[1] / 5)
-        # bar_position = (self.rect.x - 5 - m, self.rect.y - bar_height - 2 - (m/4))
-        # bar_span = (self.rect.width + 10 + (2*m), bar_height + (m/4))
-        # bar_percent = (self.healths[0] / self.healths[1])
-        # back_color = (200, 200, 255)
-        # front_color = (100, 0, 0)
-        # self.bar = bar_position, bar_span, bar_percent, back_color, front_color
 
         # drawing
         pygame.draw.rect(Entity.window, (200, 200, 255), back_bar)

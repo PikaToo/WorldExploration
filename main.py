@@ -2,10 +2,15 @@ import pygame
 import sys
 import random
 import level
-# import mobs
 from pygame.locals import *
 from entity import Entity
 from enemy import Enemy
+from explosion import Explosion
+from bullet import Bullet
+from platform import Platform
+from player import Player
+
+SAVE_FILE = "save_data/save_data.txt"
 
 # Game set up
 pygame.init()
@@ -24,10 +29,7 @@ font = pygame.font.SysFont('arial', 40)
 medium_font = pygame.font.SysFont('arial', 30)
 small_font = pygame.font.SysFont('arial', 20)
 
-# lists of all platforms, bullets, enemies, and whether each boss is dead or alive.
-platforms = []
-bullets = []
-explosions = []
+# lists of whether each boss is dead or alive.
 boss_statuses = [True, True, True, True, True, True, True, True, True, True]
 ability_statuses = [False, False, False, False, False]
 
@@ -41,6 +43,9 @@ world_x = 0
 save_point = (0, boss_statuses, ability_statuses, 0)   # point, bosses, abilities, gold, minimap
 
 # TODO:
+# fix rest of OOP
+#  fix fade-in from upgrade
+#
 # cannon enemy
 #
 # add more enemies and levels
@@ -67,381 +72,15 @@ save_point = (0, boss_statuses, ability_statuses, 0)   # point, bosses, abilitie
 #
 # consider moving pausing and some functions into a separate script
 
-
+# passing information to entity
 Entity.window = window
+Entity.window_height = window_height
+Entity.window_width = window_width
+Platform.window = window
 
-# platform: all walls and other hard surfaces
-class Platform(object):
-    def __init__(self, x_pos, y_pos, size, platform_type):
-        self.rect = pygame.Rect(x_pos, y_pos, size, size)
-        self.type = platform_type
-        platforms.append(self)
+# initializing the player
+player = Player()
 
-    # draws platforms based on current stage's wall color
-    def draw(self, wall_color):
-        if self.type == "platform":               # these 2 platforms are just drawn in respective colors
-            pygame.draw.rect(window, wall_color, self.rect)
-        if self.type == "load":
-            pygame.draw.rect(window, (255, 100, 0), self.rect)
-        if self.type == "upgrade":                # upgrade (unlock token) decides if it should exist
-            # checks world location and if the ability is not unlocked before revealing self
-            if world_y == 2 and world_x == 1 and not ability_statuses[0]:
-                pygame.draw.rect(window, (200, 200, 0), self.rect)
-            elif world_y == 3 and world_x == 0 and not ability_statuses[1]:
-                pygame.draw.rect(window, (200, 200, 0), self.rect)
-            elif world_y == 3 and world_x == 5 and not ability_statuses[2]:
-                pygame.draw.rect(window, (200, 200, 0), self.rect)
-            elif world_y == 8 and world_x == 0 and not ability_statuses[3]:
-                pygame.draw.rect(window, (200, 200, 0), self.rect)
-            else:
-                self.delete()
-    
-    def delete(self):
-        platforms.remove(self)
-
-
-
-
-# bullet: a bullet shot by either a player or an enemy
-class Bullet(Entity):
-    def __init__(self, x_pos, y_pos, x_velocity, y_velocity, owner, size, gravity, damage):
-        super().__init__(x_pos, y_pos, size, (255, 255, 255), x_velocity, y_velocity)
-        self.owner = owner
-        self.size = size
-        self.gravity = gravity
-        self.damage = damage
-        
-        bullets.append(self)
-
-    # moves bullet by velocity; applies gravity
-    def move_self(self):
-        self.rect.x += self.x_velocity
-        self.rect.y += self.y_velocity
-        self.y_velocity += self.gravity
-
-    # returns true if in bounds of world
-    def in_bounds(self): 
-        in_vertical_bounds = 0 < self.rect.y < window_height + self.size 
-        in_horizontal_bounds = 0 < self.rect.x < window_width + self.size
-        return in_vertical_bounds and in_horizontal_bounds
-
-    def delete(self):
-        bullets.remove(self)
-
-
-# explosion: the enemy death's gold-particle explosion 
-class Explosion(Entity):
-
-    # recursive initialization
-    def __init__(self, x_pos, y_pos, size):
-    
-        # base case: size is zero or negative
-        if size <= 0:
-            return
-        
-        # recursive case: make self
-        x_velocity = random.randint(-size, size)
-        y_velocity = -8 + size/10
-        super().__init__(x_pos, y_pos, size, (255, 255, 0), x_velocity, y_velocity)
-
-        # append to list, make next particle    
-        explosions.append(self)
-        Explosion(x_pos, y_pos, size - 1)
-
-    # moves by velocity; applies gravity
-    def move_self(self):
-        self.rect.x += self.x_velocity
-        self.rect.y += self.y_velocity
-        
-        self.y_velocity += 0.3
-        self.x_velocity *= 0.95
-
-    def delete(self):
-        explosions.remove(self)
-
-
-def move_explosions():
-    for explosion in explosions:
-        explosion.move_self()
-        if explosion.colliding_with(platforms):
-            explosion.delete()
-
-class Player(object):
-    def __init__(self):
-        # initial position
-        self.rect = pygame.Rect(100, 550, 20, 20)
-
-        self.x_velocity = 0  # used for dashing
-        self.y_velocity = 0  # used for gravity and jumps
-
-        # seeing if double jump has been used and how long the player has been off the ground for
-        self.double_jump = False
-        self.double_jump_counter = 0
-
-        # values used for dodging
-        self.dodge_counter = 0
-        self.x_dir = 0
-
-        # invincibility frames
-        self.i_frames = 0
-
-        # cooldown for bullets
-        self.bullet_counter = 0
-
-        # counters for showing save + exit screen
-        self.show_save = 0
-        self.show_exit = 0
-
-        # check to see if allowed to exit the room. only false when a boss is alive.
-        self.exit_status = True
-
-        # seeing if holding jump button, used to make sure you press it instead of holding
-        self.previous_w_value = False
-        self.on_ground = False
-
-    # gives 2 seconds of invincibility
-    def give_i_frames(self):
-        self.i_frames = 120
-
-    # checks if has invincibility
-    def has_no_i_frames(self):
-        return self.i_frames <= 0
-
-    # moves player
-    def move(self):
-        key = pygame.key.get_pressed()
-
-        # updates i_frames
-        if self.i_frames > 0:
-            self.i_frames -= 1
-
-        # x-movement
-        # first sets values to 0 in case no button is pressed
-        x_movement = 0
-        if key[K_d]:
-            x_movement = 5
-            self.x_dir = 25
-        if key[K_a]:
-            x_movement = -5
-            self.x_dir = -25
-
-        # dashing
-        if key[K_SPACE] and self.dodge_counter >= 40 and ability_statuses[1]:
-            self.x_velocity = self.x_dir
-            self.dodge_counter = 0
-        if self.dodge_counter < 40:
-            self.dodge_counter += 1
-
-        x_movement += self.x_velocity  # changing x by velocity
-        # changing x
-        if self.x_velocity > 0:
-            self.x_velocity -= 1
-        if self.x_velocity < 0:
-            self.x_velocity += 1
-
-        # y-movement
-        # can only press jump, not hold.
-        if not self.previous_w_value:
-            if key[K_w]:
-                if self.on_ground:
-                    self.y_velocity = -12
-                elif self.double_jump and self.double_jump_counter > 5 and ability_statuses[0]:
-                    self.y_velocity = -12
-                    self.double_jump = False
-        if key[K_w]:
-            self.previous_w_value = True
-        else:
-            self.previous_w_value = False
-
-        if not self.on_ground:                  # if not on the ground, gravity applies
-            self.y_velocity += 0.6              # and double-jump counter starts
-            self.double_jump_counter += 1
-
-        if self.y_velocity > 20:           # terminal velocity
-            self.y_velocity = 20
-        if self.y_velocity < -20:
-            self.y_velocity = -20
-
-        self.move_linear(x_movement, 0)
-        self.move_linear(0, self.y_velocity)
-
-        if ability_statuses[2]:
-            self.shoot()
-
-    def shoot(self):
-        # counting upwards until it reaches 20 where it stops.
-        # doesn't need to stop, only doing so to avoid very large numbers
-        if self.bullet_counter < 20:
-            self.bullet_counter += 1
-
-        # gets mouse vectors for shooting. if no keyboard inputs are registered, uses them.
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-        x_diff = mouse_x - self.rect.x
-        y_diff = mouse_y - self.rect.y
-
-        # if keyboard controls are used.
-        key = pygame.key.get_pressed()
-        if key[pygame.K_UP] or key[pygame.K_DOWN] or key[pygame.K_LEFT] or key[pygame.K_RIGHT]:
-            y_diff = x_diff = 0
-            if key[pygame.K_UP]:
-                y_diff = -1
-            if key[pygame.K_DOWN]:
-                y_diff = 1
-            if key[pygame.K_LEFT]:
-                x_diff = -1
-            if key[pygame.K_RIGHT]:
-                x_diff = 1
-
-        # using values obtained to get a vector to determine how the bullet will travel
-        if not (abs(x_diff) + abs(y_diff)) == 0:  # first making sure no divide by 0 error
-            x_vector = x_diff / (abs(x_diff) + abs(y_diff))  # getting how much of x is in x + y
-            y_vector = y_diff / (abs(x_diff) + abs(y_diff))  # getting how much of y is in x + y
-
-            valid_key_pressed = key[pygame.K_LEFT] or key[pygame.K_RIGHT] or key[pygame.K_UP] or key[pygame.K_DOWN] or \
-                pygame.mouse.get_pressed()[0]
-
-            # firing. can only fire 4 times a second
-            if valid_key_pressed and self.bullet_counter >= 15:
-                # bullet direction is set based on vectors
-                Bullet(self.rect.x + 5, self.rect.y + 5, x_vector * 20, y_vector * 20, "player", 10, 0, 1)
-                self.bullet_counter = 0
-
-    def move_linear(self, x, y):
-        global save_point
-        self.rect.x += x  # move by x, which is the sum of dashing + regular movement
-
-        self.on_ground = False  # assumes you are in free-fall
-        self.rect.y += y  # moves you by velocity
-
-        for platform in platforms:  # platform collision detection
-            if platform.type == "platform":
-                if (self.rect.bottom == platform.rect.top) and \
-                    (self.rect.left in range (platform.rect.left - self.rect.width, platform.rect.right)):
-                    self.on_ground = True
-            if self.rect.colliderect(platform.rect):
-                if platform.type == "platform":
-                    if x > 0:
-                        self.rect.right = platform.rect.left
-                    if x < 0:
-                        self.rect.left = platform.rect.right
-
-                    if y > 0:
-                        self.rect.bottom = platform.rect.top
-                        self.on_ground = True  # if you are touching the ground, these 2 are set as true.
-                        self.double_jump = True  # allows you to jump and resets double jump ability.
-                        self.double_jump_counter = 0  # sets counter for double jump to 0, used to prevent
-                        self.y_velocity = 0
-                    if y < 0:  # both jumps from immediately occuring back-to-back.
-                        self.rect.top = platform.rect.bottom
-
-                if platform.type == "upgrade":  # if the platform was an upgrade token, calls another function
-                    text1 = text2 = ""
-                    if world_y == 2 and world_x == 1:
-                        ability_statuses[0] = True
-                        text1 = "Unlocked double jump."
-                        text2 = "Press W while in the air to use."
-                    if world_y == 3 and world_x == 0:
-                        ability_statuses[1] = True
-                        text1 = "Unlocked dash."
-                        text2 = "Press space to use."
-                    if world_y == 3 and world_x == 5:
-                        ability_statuses[2] = True
-                        text1 = "Unlocked blaster."
-                        text2 = "Press arrow keys or click the mouse to use."
-                    if world_y == 8 and world_x == 0:
-                        ability_statuses[3] = True
-                        text1 = "Health has been increased."
-                        text2 = "You now have more health."
-
-                    # getting a surface for the fade into black effect
-                    s = pygame.Surface((1200, 600))  # making a surface to get a transparent rect
-                    s.set_alpha(12)  # alpha level
-                    s.fill((0, 0, 0))  # black
-
-                    counter = 0
-                    while True:
-                        for event in pygame.event.get():
-                            if event.type == QUIT:
-                                pygame.quit()
-                                sys.exit()
-
-                        if counter < 50:  # first 50 ticks are on fading to black
-                            window.blit(s, (0, 0))
-                        if counter > 50:  # after 50 ticks, shows text.
-                            window.blit(font.render(text1, False, (255, 255, 255)), (50, 200))
-                            window.blit(small_font.render("Press P to leave this menu.", False, (255, 255, 255)),
-                                        (50, 400))
-                            window.blit(medium_font.render(text2, False, (255, 255, 255)), (50, 280))
-
-                        key = pygame.key.get_pressed()  # exit through p
-                        if key[K_p]:
-                            break
-
-                        fpsClock.tick(FPS)
-                        pygame.display.update()
-                        counter += 1
-                if platform.type == "load":
-                    self.show_save = 100
-                    if world_x == 0 and world_y == 8:
-                        save_game(1)
-                    if world_x == 2 and world_y == 7:
-                        save_game(2)
-
-        if self.i_frames > 0:  # if player has i_frames, draw a lighter blue.
-            pygame.draw.rect(window, (100, 100, 255), self.rect)
-        elif self.i_frames != -50:
-            pygame.draw.rect(window, (0, 0, 255), self.rect)
-
-    def check_for_new_stage(self, health):
-        global world_x, world_y, boss_statuses
-        if health > 0:
-            if self.exit_status:  # only can change level if exits are open (i.e. bosses are dead)
-                if self.rect.x < 10:  # moving by x
-                    world_x -= 1
-                    self.rect.x = window_width - 30
-                if self.rect.x + 10 > window_width:
-                    self.rect.x = 10
-                    world_x += 1
-                if self.rect.y < 10:  # moving by y
-                    world_y -= 1
-                    self.rect.y = window_height - 30
-                if self.rect.y + 10 > window_height:
-                    self.rect.y = 30
-                    world_y += 1
-                    if self.y_velocity > 5:         # preventing high gravity upon level switch
-                        self.y_velocity = 5
-            else:  # if exits are closed, shows text and prevents movement.
-                if not 0 < self.rect.x < (window_width - 20) or not 0 < self.rect.y < (window_height - 20):
-                    self.show_exit = 100
-                if self.rect.x < 0:
-                    self.rect.x = 0
-                    self.x_velocity = 8
-                if self.rect.x > window_width - 20:
-                    self.rect.x = window_width - 20
-                    self.x_velocity = -8
-                if self.rect.y < 0:
-                    self.rect.y = 0
-                    self.y_velocity = 8
-                if self.rect.y > window_height - 20:
-                    self.rect.y = window_height - 20
-                    self.y_velocity = -8
-                # doesn't entirely block movement since this comes before the movement function in main(),
-                # but it has to or else there will be problems with collision as this is the function that
-                # sets the world level.
-
-    def player_pos_change(self):
-        if save_point[0] == 1:
-            self.rect.x = 100
-            self.rect.y = 550
-        if save_point[0] == 1:
-            self.rect.x = 843
-            self.rect.y = 400
-        if save_point[0] == 2:
-            self.rect.x = 663
-            self.rect.y = 280
-
-
-player = Player()  # defining player here instead of main because it is used before the main loop.
 
 def save_game(point):
     global save_point
@@ -460,21 +99,25 @@ def load_game(save_data):
     if save_data[0] == 2:
         world_x = 2
         world_y = 7
+    if save_data[0] == 98:
+        world_x = 0
+        world_y = 8
     if save_data[0] == 99:
         world_x = 4
         world_y = 11
     boss_statuses = save_data[1]
     ability_statuses = save_data[2]
     gold = save_data[3]
-    player.player_pos_change()
+    player.player_pos_change(save_data[0])
 
 
-# function that runs when asked to input a load, only used after menu. put here for reducing menu function size.
+# function that runs when asked to input a load, only used after menu. 
 def ask_for_load():
-    global save_point
     name = ""
     # temp_code = 9901 1111 1111 1111 0000 0000
-    name = "990011111111111100000000"
+    # name = "990011111111111100000000"
+    # name = "980011111111100000000000"
+    name = "980011111111111000000000"
     message = font.render("Enter your load code.", True, (255, 255, 255))
     valid_numbers = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
     while True:
@@ -518,7 +161,7 @@ def ask_for_load():
                                                                                     # 4 values
                         save_point = (s_point, s_boss_list, s_ability_list, s_gold)
 
-                        return  # breaks loop
+                        return save_point # breaks loop
 
         # formatting the load code to make it more legible
         formatted_code = ""
@@ -564,12 +207,11 @@ def main_menu():
         if mouse_rect.colliderect(new_rect):                        # if button collides, changes back color
             new_back_color = (200, 200, 50)
             if pygame.mouse.get_pressed()[0]:                       # ends screen if new is clicked
-                return
+                return None   # no save data 
         if mouse_rect.colliderect(load_rect):                       # switches to load screen if load is clicked
             load_back_color = (200, 200, 50)
             if pygame.mouse.get_pressed()[0]:
-                ask_for_load()
-                return
+                return ask_for_load()  # save data
 
         # drawing the back of the buttons
         pygame.draw.rect(window, new_back_color, back_new_rect)
@@ -592,7 +234,7 @@ def main_menu():
 
 
 def main():
-    global boss_statuses, platforms, bullets, explosions, gold
+    global boss_statuses, gold, world_x, world_y
     # setting theme colors based on location, using a list where 1st two values are y-value range and 3rd is color
     background_color_palette = [
         [0, 5,  (0, 0, 0),     0, 4,   (100, 100, 100)],    # tutorial colors
@@ -600,23 +242,28 @@ def main():
         [9, 12, (0, 0, 10),    10, 12, (50, 50, 60)]]       # ice colors
     # color values (pink) incase none was assigned.
     background_color = (255, 100, 100)
-    wall_color = (255, 100, 100)
 
     # getting save file and loading
-    main_menu()
+    save_point = main_menu()
     load_game(save_point)
 
     # initial values
     previous_stage = 0
     holding_escape = False
     damage_counter = [0, 0]
-    health = 5
+    player.current_health = 5
     if ability_statuses[3]:
-        health = 8
+        player.current_health = 8
+    player.max_health = player.current_health
     fade_counter = 0                            # these 3 are fading stuff initial values
     fade_screen = pygame.Surface((1200, 600))   # making a surface to get a transparent rect
     fade_screen.fill((0, 0, 0))                 # making surface black
 
+    # FPS display stuff
+    show_FPS = False
+    FPS_list = [60, 60, 60, 60]     # FPS from last 4 frames
+    previous_backspace = True
+    
     # main loop
     while True:
         for event in pygame.event.get():
@@ -629,32 +276,47 @@ def main():
             if potential_value[0] <= world_y <= potential_value[1]:     # first half is background color
                 background_color = potential_value[2]
             if potential_value[3] <= world_y <= potential_value[4]:     # second half is wall color
-                wall_color = potential_value[5]
+                Platform.wall_color = potential_value[5]
         window.fill(background_color)
 
         # setting total health baesd on abilities
-        total_health = 5
+        player.max_health = 5
         if ability_statuses[3]:
-            total_health = 8
-        if health > total_health:
-            health = total_health
+            player.max_health = 8
+        if player.current_health > player.max_health:
+            player.current_health = player.max_health
 
-        # checking to see if player has changed stages, also seeing if they died
-        player.check_for_new_stage(health)
+        # if player alive, check if need to swap stages
+        if player.current_health > 0:
+            if player.exit_status:  # only can change level if exits are open (i.e. bosses are dead)
+                if player.rect.x < 10:  # moving by x
+                    world_x -= 1
+                    player.rect.x = Entity.window_width - 30
+                if player.rect.x + 10 > Entity.window_width:
+                    player.rect.x = 10
+                    world_x += 1
+                if player.rect.y < 10:  # moving by y
+                    world_y -= 1
+                    player.rect.y = Entity.window_height - 30
+                if player.rect.y + 10 > Entity.window_height:
+                    player.rect.y = 30
+                    world_y += 1
+                    if player.y_velocity > 5:         # preventing high gravity upon level switch
+                        player.y_velocity = 5
 
         # changing everything if the player died
-        if health <= 0:
-            health = total_health
+        if player.current_health <= 0:
+            player.current_health = player.max_health
             load_game(save_point)
 
         # building the stage
         if not (world_y + 1) > len(world) and not (world_x + 1) > len(world[0]):    # making sure level exists
             stage = world[world_y][world_x]
         if stage != previous_stage:
-            platforms = []
+            Platform.platforms = []
             Entity.enemies = []
-            bullets = []
-            explosions = []
+            Bullet.bullets = []
+            Explosion.explosions = []
             wall_x = wall_y = 0
             fade_counter = 10
 
@@ -687,6 +349,14 @@ def main():
                 wall_y += 30
                 wall_x = 0
 
+        # every frame, update static variables (temp)
+        Platform.ability_statuses = ability_statuses
+        Player.ability_statuses = ability_statuses
+        Platform.world_x = world_x
+        Platform.world_y = world_y
+        player.world_x = world_x
+        player.world_y = world_y
+       
         previous_stage = stage  # setting this for the next frame to use
         
         # enemy stuff
@@ -704,11 +374,7 @@ def main():
                     if boss_statuses[enemy.boss]:   # checks to see if the boss status of the enemy is true
                         player.exit_status = False
 
-                enemy.move(player.rect, platforms)  # moves enemies, gives them player location
-                if enemy.fired:                               # if the mob fired, fires with info taken from them
-                    Bullet(enemy.fire_info[0], enemy.fire_info[1], enemy.fire_info[2], enemy.fire_info[3], enemy.fire_info[4],
-                           enemy.fire_info[5], enemy.fire_info[6], enemy.damage)
-                    enemy.fired = False
+                enemy.move(player.rect, Platform.platforms)  # moves enemies, gives them player location
 
                 # player-enemy collision
                 if player.rect.colliderect(enemy.rect) and player.has_no_i_frames():
@@ -719,80 +385,145 @@ def main():
                 enemy.draw_health_bar()
 
         # all bullet stuff happens here
-        for bullet in bullets:
+        for bullet in Bullet.bullets:
+            will_die = False
             bullet.move_self()
             
             # checking collision with walls and also for off-screen to see if bullet should live
-            if (bullet.colliding_with(platforms) or not bullet.in_bounds()):
-                bullet.delete()
-                continue
+            if (bullet.colliding_with_platforms() or not bullet.in_bounds()):
+                will_die = True
 
             # if bullet shot by the player, checks collision againt enemies
             if bullet.owner == "player":
                 for enemy in Entity.enemies:
                     if bullet.rect.colliderect(enemy.rect):
                         enemy.current_health -= bullet.damage + (gold/100)
-                        bullet.delete()
-                        continue
+                        will_die = True
 
             # if bullet shot by an enemy, checks collision against player
             if bullet.owner == "enemy":
                 if bullet.rect.colliderect(player.rect) and player.has_no_i_frames():
                     damage_counter = [20, bullet.damage]
                     player.give_i_frames()
-                    bullet.delete()
-                    continue
+                    will_die = True
+
+            if will_die:
+                bullet.delete()
 
         # movement
-        move_explosions()
-        player.move()
+        for explosion in Explosion.explosions:
+            explosion.move()
+        player.move()  
+
+        # player upgrade collision
+        for platform in Platform.platforms:
+            if platform.type == "upgrade" and player.rect.colliderect(platform.rect):  # if the platform was an upgrade token, calls another function
+                text1 = ""; text2 = ""
+                if world_y == 2 and world_x == 1:
+                    ability_statuses[0] = True
+                    text1 = "Unlocked double jump."
+                    text2 = "Press W while in the air to use."
+                if world_y == 3 and world_x == 0:
+                    ability_statuses[1] = True
+                    text1 = "Unlocked dash."
+                    text2 = "Press space to use."
+                if world_y == 3 and world_x == 5:
+                    ability_statuses[2] = True
+                    text1 = "Unlocked blaster."
+                    text2 = "Press arrow keys or click the mouse to use."
+                if world_y == 8 and world_x == 0:
+                    ability_statuses[3] = True
+                    text1 = "Health has been increased."
+                    text2 = "You now have more health."
+
+                # getting a surface for the fade into black effect
+                s = pygame.Surface((1200, 600))  # making a surface to get a transparent rect
+                s.set_alpha(12)  # alpha level
+                s.fill((0, 0, 0))  # black
+
+                upgrade_fade_counter = 0
+                while True:
+                    for event in pygame.event.get():
+                        if event.type == QUIT:
+                            pygame.quit()
+                            sys.exit()
+
+                    if upgrade_fade_counter < 50:  # first 50 ticks are on fading to black
+                        window.blit(s, (0, 0))
+                    if upgrade_fade_counter > 50:  # after 50 ticks, shows text.
+                        window.blit(font.render(text1, False, (255, 255, 255)), (50, 200))
+                        window.blit(small_font.render("Press P to leave this menu.", False, (255, 255, 255)),
+                                    (50, 400))
+                        window.blit(medium_font.render(text2, False, (255, 255, 255)), (50, 280))
+
+                    key = pygame.key.get_pressed()  # exit through p
+                    if key[K_p]:
+                        break
+
+                    fpsClock.tick(FPS)
+                    pygame.display.update()
+                    upgrade_fade_counter += 1
+    
+        # if exits are closed, shows text and prevents movement if player tries to leave bounds
+        if not player.exit_status:              
+            if not player.in_bounds():
+                player.show_exit = 100
+            player.stop_escape()
+
+        # bad that player save like this TODO: fix
+        if player.save != 0:
+            save_game(player.save)
+            player.save = 0
+        player.save_point = save_point
         
         # drawing entities
-        for platform in platforms:
-            platform.draw(wall_color)
-        for bullet in bullets:
+        for platform in Platform.platforms:
+            platform.draw()
+        for bullet in Bullet.bullets:
             bullet.draw()
-        for explosion in explosions:
+        for explosion in Explosion.explosions:
             explosion.draw()
         for enemy in Entity.enemies:
             enemy.draw()
-        
+        player.draw()
+
         # rumble and health decrease
         bar_rumble = 0
-        if damage_counter[0] > 0:                              # ticking counter down, taking damage
+        if damage_counter[1] > 0:                              # ticking counter down, taking damage
             damage_counter[0] -= 1
             bar_rumble = random.randint(-3, 3)
-        if damage_counter[0] == 1:                             # removes health after rumble
-            health -= damage_counter[1]
-            damage_counter[1] = 0
+            if damage_counter[0] == 0:                             # removes health after rumble
+                player.current_health -= damage_counter[1]
+                damage_counter[1] = 0
         # rumble and health increase
         if damage_counter[1] < 0:                              # ticking counter up, restoring health
-            damage_counter[1] += 1
-            if health != total_health:
-                bar_rumble = random.randint(-2, 2)
-        if damage_counter[1] == -1:                            # restores health after rumble
-            health = total_health
+            damage_counter[0] -= 1
+            bar_rumble = random.randint(-2, 2)
+            if damage_counter[0] == 0:                            # restores health after rumble
+                player.current_health = player.max_health
+                damage_counter[1] = 0
 
         # showing UI
         i = 0
-        while i < total_health:                                         # health circles
+        while i < player.max_health:                                         # health circles
             i += 1
             individual_rumble = bar_rumble * random.randint(-1, 1)      # rumble, off-sets all values
-            x_pos = i*25 + 40 + individual_rumble
-            y_pos = 585 + individual_rumble
+            x_pos = i*25 + 40
+            y_pos = 585
+            x_pos_rumble = x_pos + individual_rumble
+            y_pos_rumble = y_pos + individual_rumble
             pygame.draw.circle(window, (100, 50, 50), (x_pos, y_pos), 12)       # background circle
 
-            hearts_losing_life = health - damage_counter[1] + 1
-
+            hearts_losing_life = player.current_health - damage_counter[1] + 1
+            
             # inner circle varies.
-            if i <= health:                                             # only draws if have equal or more health
+            if i <= player.current_health:                                             # only draws if have equal or more health
                 if damage_counter[0] > 0 and i >= hearts_losing_life:   # shrinking animation if taking damage
-                    pygame.draw.circle(window, (255, 50, 50), (x_pos, y_pos), 0.5 * damage_counter[0])
+                    pygame.draw.circle(window, (255, 50, 50), (x_pos_rumble, y_pos_rumble), 0.5 * damage_counter[0])
                 else:
-                    pygame.draw.circle(window, (255, 80, 80), (x_pos, y_pos), 10)
-            if i > health and damage_counter[0] < 0:                       # growing animation if restoring health
-                print("restoring")
-                pygame.draw.circle(window, (255, 50, 50), (x_pos, y_pos), 10 - (0.5 * -damage_counter[0]))
+                    pygame.draw.circle(window, (255, 80, 80), (x_pos_rumble, y_pos_rumble), 10)
+            if i > player.current_health and damage_counter[1] < 0:                       # growing animation if restoring health
+                pygame.draw.circle(window, (255, 50, 50), (x_pos, y_pos), 10 - (0.5 * damage_counter[0]))
 
         level = (chr(65 + world_x) + str('%02d' % (world_y + 1)))           # getting level value from numbers
         window.blit(small_font.render(level, False, (255, 255, 255)), (1171, 575))          # levels
@@ -879,8 +610,26 @@ def main():
 
                 pygame.display.update()
 
+        # toggling FPS display with backspace
+        if key[K_BACKSPACE] and not previous_backspace:
+            show_FPS = not show_FPS
+        # getting average FPS for use in drawing
+        if show_FPS:
+            FPS_list.append(int(fpsClock.get_fps()))
+            del FPS_list[0]
+            average_FPS = sum(FPS_list) / len(FPS_list)
+            if average_FPS < 30:
+                color = (255, 0, 0)
+            elif average_FPS < 45:
+                color = (255, 255, 0)
+            else:
+                color = (255, 255, 255)
+            window.blit(font.render(f"FPS: {average_FPS}", True, color), pygame.Rect(window_width - 200, 0, 0, 0))
+
         if not key[K_ESCAPE]:
             holding_escape = False
+        previous_backspace = key[K_BACKSPACE]
+
 
         # screen fade
         fade_screen.set_alpha(0)
@@ -892,7 +641,7 @@ def main():
         # grabs values from a ticker in player which get set to 100 upon touching something.
         # used for persistent text boxes, such as after touching a save point.
         if player.show_save == 100:
-            damage_counter = [-20, 0]
+            damage_counter = [20, -1]
         if player.show_save > 0:
             player.show_save -= 1
             text = medium_font.render("Your progress has been saved.", False, (255, 255, 100))
