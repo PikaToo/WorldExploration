@@ -2,8 +2,10 @@ import pygame
 import sys
 import random
 import level
-import mobs
+# import mobs
 from pygame.locals import *
+from entity import Entity
+from enemy import Enemy
 
 # Game set up
 pygame.init()
@@ -25,7 +27,6 @@ small_font = pygame.font.SysFont('arial', 20)
 # lists of all platforms, bullets, enemies, and whether each boss is dead or alive.
 platforms = []
 bullets = []
-enemies = []
 explosions = []
 boss_statuses = [True, True, True, True, True, True, True, True, True, True]
 ability_statuses = [False, False, False, False, False]
@@ -67,62 +68,103 @@ save_point = (0, boss_statuses, ability_statuses, 0)   # point, bosses, abilitie
 # consider moving pausing and some functions into a separate script
 
 
-class Platform(pygame.sprite.Sprite):
-    # used to add a platform to the list of platforms.
-    def __init__(self, pos, size, type):
-        self.rect = pygame.Rect(pos[0], pos[1], size, size)
-        platforms.append([self.rect, type])
+Entity.window = window
+
+# platform: all walls and other hard surfaces
+class Platform(object):
+    def __init__(self, x_pos, y_pos, size, platform_type):
+        self.rect = pygame.Rect(x_pos, y_pos, size, size)
+        self.type = platform_type
+        platforms.append(self)
+
+    # draws platforms based on current stage's wall color
+    def draw(self, wall_color):
+        if self.type == "platform":               # these 2 platforms are just drawn in respective colors
+            pygame.draw.rect(window, wall_color, self.rect)
+        if self.type == "load":
+            pygame.draw.rect(window, (255, 100, 0), self.rect)
+        if self.type == "upgrade":                # upgrade (unlock token) decides if it should exist
+            # checks world location and if the ability is not unlocked before revealing self
+            if world_y == 2 and world_x == 1 and not ability_statuses[0]:
+                pygame.draw.rect(window, (200, 200, 0), self.rect)
+            elif world_y == 3 and world_x == 0 and not ability_statuses[1]:
+                pygame.draw.rect(window, (200, 200, 0), self.rect)
+            elif world_y == 3 and world_x == 5 and not ability_statuses[2]:
+                pygame.draw.rect(window, (200, 200, 0), self.rect)
+            elif world_y == 8 and world_x == 0 and not ability_statuses[3]:
+                pygame.draw.rect(window, (200, 200, 0), self.rect)
+            else:
+                self.delete()
+    
+    def delete(self):
+        platforms.remove(self)
 
 
-class Bullet(object):
-    # used to add a bullet to the list of bullets
+
+
+# bullet: a bullet shot by either a player or an enemy
+class Bullet(Entity):
     def __init__(self, x_pos, y_pos, x_velocity, y_velocity, owner, size, gravity, damage):
-        self.rect = pygame.Rect(x_pos, y_pos, size, size)
-        bullets.append([self.rect, x_velocity, y_velocity, owner, gravity, damage])
+        super().__init__(x_pos, y_pos, size, (255, 255, 255), x_velocity, y_velocity)
+        self.owner = owner
+        self.size = size
+        self.gravity = gravity
+        self.damage = damage
+        
+        bullets.append(self)
+
+    # moves bullet by velocity; applies gravity
+    def move_self(self):
+        self.rect.x += self.x_velocity
+        self.rect.y += self.y_velocity
+        self.y_velocity += self.gravity
+
+    # returns true if in bounds of world
+    def in_bounds(self): 
+        in_vertical_bounds = 0 < self.rect.y < window_height + self.size 
+        in_horizontal_bounds = 0 < self.rect.x < window_width + self.size
+        return in_vertical_bounds and in_horizontal_bounds
+
+    def delete(self):
+        bullets.remove(self)
 
 
-class Enemy(object):
-    # used to add an enemy to the list of enemies
-    def __init__(self, x_pos, y_pos, color, size, counter, enemy_AI, enemy_health, boss, other, damage):
-        self.rect = pygame.Rect(x_pos, y_pos, size, size)
-        max_enemy_health = enemy_health
-        x_velocity = y_velocity = 0
-        enemies.append([self.rect, [x_velocity, y_velocity], counter, enemy_AI,
-                        [enemy_health, max_enemy_health], color, boss, other, damage])
+# explosion: the enemy death's gold-particle explosion 
+class Explosion(Entity):
 
-
-class Explosion(object):
-    # used to add an enemy gold-death explosion to the list
+    # recursive initialization
     def __init__(self, x_pos, y_pos, size):
+    
+        # base case: size is zero or negative
         if size <= 0:
             return
-        if size > 1:
-            self.rect = pygame.Rect(x_pos, y_pos, 2, 2)
-            x_vel = random.randint(-size, size)
-            y_vel = -8 + size/10
-            explosions.append([self.rect, x_vel, y_vel])
-            Explosion(x_pos, y_pos, size - 1)
+        
+        # recursive case: make self
+        x_velocity = random.randint(-size, size)
+        y_velocity = -8 + size/10
+        super().__init__(x_pos, y_pos, size, (255, 255, 0), x_velocity, y_velocity)
+
+        # append to list, make next particle    
+        explosions.append(self)
+        Explosion(x_pos, y_pos, size - 1)
+
+    # moves by velocity; applies gravity
+    def move_self(self):
+        self.rect.x += self.x_velocity
+        self.rect.y += self.y_velocity
+        
+        self.y_velocity += 0.3
+        self.x_velocity *= 0.95
+
+    def delete(self):
+        explosions.remove(self)
 
 
 def move_explosions():
     for explosion in explosions:
-        explosion[2] += 0.3
-        if explosion[1] > 0:
-            explosion[1] -= 0.6
-        if explosion[1] < 0:
-            explosion[1] += 0.6
-        explosion[0].y += explosion[2]
-        explosion[0].x += explosion[1]
-
-        explosion_particle_alive = True
-        for platform in platforms:
-            if explosion[0].colliderect(platform[0]) and explosion_particle_alive:
-                explosions.remove(explosion)
-                explosion_particle_alive = False
-
-        if explosion_particle_alive:
-            pygame.draw.rect(window, (255, 255, 0), explosion[0])
-
+        explosion.move_self()
+        if explosion.colliding_with(platforms):
+            explosion.delete()
 
 class Player(object):
     def __init__(self):
@@ -140,6 +182,9 @@ class Player(object):
         self.dodge_counter = 0
         self.x_dir = 0
 
+        # invincibility frames
+        self.i_frames = 0
+
         # cooldown for bullets
         self.bullet_counter = 0
 
@@ -154,8 +199,21 @@ class Player(object):
         self.previous_w_value = False
         self.on_ground = False
 
-    def move(self, invincibility):  # movement inputs invincibility status solely for changing color upon hit
+    # gives 2 seconds of invincibility
+    def give_i_frames(self):
+        self.i_frames = 120
+
+    # checks if has invincibility
+    def has_no_i_frames(self):
+        return self.i_frames <= 0
+
+    # moves player
+    def move(self):
         key = pygame.key.get_pressed()
+
+        # updates i_frames
+        if self.i_frames > 0:
+            self.i_frames -= 1
 
         # x-movement
         # first sets values to 0 in case no button is pressed
@@ -204,8 +262,8 @@ class Player(object):
         if self.y_velocity < -20:
             self.y_velocity = -20
 
-        self.move_linear(x_movement, 0, -50)
-        self.move_linear(0, self.y_velocity, invincibility)
+        self.move_linear(x_movement, 0)
+        self.move_linear(0, self.y_velocity)
 
         if ability_statuses[2]:
             self.shoot()
@@ -248,7 +306,7 @@ class Player(object):
                 Bullet(self.rect.x + 5, self.rect.y + 5, x_vector * 20, y_vector * 20, "player", 10, 0, 1)
                 self.bullet_counter = 0
 
-    def move_linear(self, x, y, invincibility):
+    def move_linear(self, x, y):
         global save_point
         self.rect.x += x  # move by x, which is the sum of dashing + regular movement
 
@@ -256,27 +314,27 @@ class Player(object):
         self.rect.y += y  # moves you by velocity
 
         for platform in platforms:  # platform collision detection
-            if platform[1] == "platform":
-                if (self.rect.bottom == platform[0].top) and \
-                    (self.rect.left in range (platform[0].left - self.rect.width, platform[0].right)):
+            if platform.type == "platform":
+                if (self.rect.bottom == platform.rect.top) and \
+                    (self.rect.left in range (platform.rect.left - self.rect.width, platform.rect.right)):
                     self.on_ground = True
-            if self.rect.colliderect(platform[0]):
-                if platform[1] == "platform":
+            if self.rect.colliderect(platform.rect):
+                if platform.type == "platform":
                     if x > 0:
-                        self.rect.right = platform[0].left
+                        self.rect.right = platform.rect.left
                     if x < 0:
-                        self.rect.left = platform[0].right
+                        self.rect.left = platform.rect.right
 
                     if y > 0:
-                        self.rect.bottom = platform[0].top
+                        self.rect.bottom = platform.rect.top
                         self.on_ground = True  # if you are touching the ground, these 2 are set as true.
                         self.double_jump = True  # allows you to jump and resets double jump ability.
                         self.double_jump_counter = 0  # sets counter for double jump to 0, used to prevent
                         self.y_velocity = 0
                     if y < 0:  # both jumps from immediately occuring back-to-back.
-                        self.rect.top = platform[0].bottom
+                        self.rect.top = platform.rect.bottom
 
-                if platform[1] == "upgrade":  # if the platform was an upgrade token, calls another function
+                if platform.type == "upgrade":  # if the platform was an upgrade token, calls another function
                     text1 = text2 = ""
                     if world_y == 2 and world_x == 1:
                         ability_statuses[0] = True
@@ -322,17 +380,17 @@ class Player(object):
                         fpsClock.tick(FPS)
                         pygame.display.update()
                         counter += 1
-                if platform[1] == "load":
+                if platform.type == "load":
                     self.show_save = 100
                     if world_x == 0 and world_y == 8:
                         save_game(1)
                     if world_x == 2 and world_y == 7:
                         save_game(2)
 
-        if invincibility > 0:  # if have i_frames, drawn a lighter blue.
-            pygame.draw.rect(window, (100, 100, 255), self.rect)  # draws player
-        elif invincibility != -50:
-            pygame.draw.rect(window, (0, 0, 255), self.rect)  # draws player
+        if self.i_frames > 0:  # if player has i_frames, draw a lighter blue.
+            pygame.draw.rect(window, (100, 100, 255), self.rect)
+        elif self.i_frames != -50:
+            pygame.draw.rect(window, (0, 0, 255), self.rect)
 
     def check_for_new_stage(self, health):
         global world_x, world_y, boss_statuses
@@ -385,34 +443,6 @@ class Player(object):
 
 player = Player()  # defining player here instead of main because it is used before the main loop.
 
-
-def draw_health_bar(bar_position, bar_span, bar_percent, back_color, front_color):
-    bar = pygame.Rect(bar_position[0], bar_position[1], bar_span[0], bar_span[1])
-    current_bar = pygame.Rect(bar_position[0], bar_position[1], bar_span[0] * bar_percent, bar_span[1])
-    pygame.draw.rect(window, back_color, bar)
-    pygame.draw.rect(window, front_color, current_bar)
-
-
-def draw_platforms(platform_list, wall_color):
-    for platform in platform_list:
-        if platform[1] == "platform":               # these 2 platforms are just drawn in respective colors
-            pygame.draw.rect(window, wall_color, platform[0])
-        if platform[1] == "load":
-            pygame.draw.rect(window, (255, 100, 0), platform[0])
-        if platform[1] == "upgrade":                # upgrade (unlock token) decides if it should exist
-            # checks world location and if the ability is not unlocked before revealing self
-            if world_y == 2 and world_x == 1 and not ability_statuses[0]:
-                pygame.draw.rect(window, (200, 200, 0), platform[0])
-            elif world_y == 3 and world_x == 0 and not ability_statuses[1]:
-                pygame.draw.rect(window, (200, 200, 0), platform[0])
-            elif world_y == 3 and world_x == 5 and not ability_statuses[2]:
-                pygame.draw.rect(window, (200, 200, 0), platform[0])
-            elif world_y == 8 and world_x == 0 and not ability_statuses[3]:
-                pygame.draw.rect(window, (200, 200, 0), platform[0])
-            else:
-                platforms.remove(platform)
-
-
 def save_game(point):
     global save_point
     save_point = (point, boss_statuses, ability_statuses, gold)
@@ -432,7 +462,7 @@ def load_game(save_data):
         world_y = 7
     if save_data[0] == 99:
         world_x = 4
-        world_y = 12
+        world_y = 11
     boss_statuses = save_data[1]
     ability_statuses = save_data[2]
     gold = save_data[3]
@@ -444,7 +474,7 @@ def ask_for_load():
     global save_point
     name = ""
     # temp_code = 9901 1111 1111 1111 0000 0000
-    # name = "990011111111111100000000"
+    name = "990011111111111100000000"
     message = font.render("Enter your load code.", True, (255, 255, 255))
     valid_numbers = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
     while True:
@@ -562,7 +592,7 @@ def main_menu():
 
 
 def main():
-    global boss_statuses, enemies, platforms, bullets, explosions, gold
+    global boss_statuses, platforms, bullets, explosions, gold
     # setting theme colors based on location, using a list where 1st two values are y-value range and 3rd is color
     background_color_palette = [
         [0, 5,  (0, 0, 0),     0, 4,   (100, 100, 100)],    # tutorial colors
@@ -577,7 +607,6 @@ def main():
     load_game(save_point)
 
     # initial values
-    i_frames = 0
     previous_stage = 0
     holding_escape = False
     damage_counter = [0, 0]
@@ -594,7 +623,7 @@ def main():
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
-
+        
         # iterating through the color list defined earlier.
         for potential_value in background_color_palette:
             if potential_value[0] <= world_y <= potential_value[1]:     # first half is background color
@@ -623,7 +652,7 @@ def main():
             stage = world[world_y][world_x]
         if stage != previous_stage:
             platforms = []
-            enemies = []
+            Entity.enemies = []
             bullets = []
             explosions = []
             wall_x = wall_y = 0
@@ -632,11 +661,11 @@ def main():
             for row in stage:
                 for value in row:
                     if value == "W":
-                        Platform((wall_x, wall_y), 30, "platform")
+                        Platform(wall_x, wall_y, 30, "platform")
                     if value == "U":
-                        Platform((wall_x + 5, wall_y + 5), 15, "upgrade")
+                        Platform(wall_x + 5, wall_y + 5, 15, "upgrade")
                     if value == "L":
-                        Platform((wall_x + 5, wall_y + 5), 15, "load")
+                        Platform(wall_x + 5, wall_y + 5, 15, "load")
                     # Enemy(x_pos, y_pos, color, size, counter, enemy_AI, enemy_health, boss, other, damage)
                     if value == "0" and boss_statuses[0]:
                         Enemy(wall_x, wall_y, (255, 0, 0), 20, -60, "Target", 8, 0, False, 1)
@@ -659,88 +688,75 @@ def main():
                 wall_x = 0
 
         previous_stage = stage  # setting this for the next frame to use
-
-        # platform stuff. done elsewhere.
-        draw_platforms(platforms, wall_color)
-
+        
         # enemy stuff
         player.exit_status = True
-        for enemy in enemies:
-            mob = mobs.Mob(enemy)                    # add information to the function for processing
-
-            if mob.healths[0] <= 0:                            # if death is true, does some things
-                gold += mob.gold
-                Explosion(enemy[0].x + (enemy[0].width / 2), enemy[0].y + (enemy[0].height / 2), mob.gold + 1)
-                if mob.healths != -1:
-                    boss_statuses[mob.boss_status] = False
-                enemies.remove(enemy)
+        for enemy in Entity.enemies:
+            if enemy.current_health <= 0:                            # if death is true, does some things
+                gold += enemy.gold
+                Explosion(enemy.rect.x + (enemy.rect.width / 2), enemy.rect.y + (enemy.rect.height / 2), enemy.gold + 1)
+                if enemy.boss != -1:
+                    boss_statuses[enemy.boss] = False
+                enemy.delete()
 
             else:                               # if death isn't true, does everything else
-                if enemy[6] != -1:
-                    if boss_statuses[enemy[6]]:   # checks to see if the boss status of the enemy is true
+                if enemy.boss != -1:
+                    if boss_statuses[enemy.boss]:   # checks to see if the boss status of the enemy is true
                         player.exit_status = False
 
-                mob.movement(player.rect, platforms)  # moves enemies, gives them player and platform location
-                if mob.fired:                               # if the mob fired, fires with info taken from them
-                    Bullet(mob.fire_info[0], mob.fire_info[1], mob.fire_info[2], mob.fire_info[3], mob.fire_info[4],
-                           mob.fire_info[5], mob.fire_info[6], enemy[8])
+                enemy.move(player.rect, platforms)  # moves enemies, gives them player location
+                if enemy.fired:                               # if the mob fired, fires with info taken from them
+                    Bullet(enemy.fire_info[0], enemy.fire_info[1], enemy.fire_info[2], enemy.fire_info[3], enemy.fire_info[4],
+                           enemy.fire_info[5], enemy.fire_info[6], enemy.damage)
+                    enemy.fired = False
 
                 # player-enemy collision
-                if player.rect.colliderect(enemy[0]) and not i_frames > 0:
-                    damage_counter = [20, enemy[8]]
-                    i_frames = 120
-
-                # I don't know why, but for some reason after it gets processed, the respective enemy in ememies
-                # seems to get updated, too, despite me not doing so. It's helpful, but still anomalous.
-                # ... except the counter and "other" value which I have to update here.
-                enemy[2] = mob.counter
-                enemy[7] = mob.other
+                if player.rect.colliderect(enemy.rect) and player.has_no_i_frames():
+                    damage_counter = [20, enemy.damage]
+                    player.give_i_frames()
 
                 # drawing
-                draw_health_bar(mob.bar[0], mob.bar[1], mob.bar[2], mob.bar[3], mob.bar[4])
-                pygame.draw.rect(window, enemy[5], enemy[0])
+                enemy.draw_health_bar()
 
         # all bullet stuff happens here
         for bullet in bullets:
-            dead = False  # bullet set to be alive
-            bullet[0].x += bullet[1]  # change bullet x pos by x velocity
-            bullet[0].y += bullet[2]  # change bullet y pos by y velocity
-            bullet[2] = bullet[2] + bullet[4]  # change y velocity by y acceleration
+            bullet.move_self()
+            
+            # checking collision with walls and also for off-screen to see if bullet should live
+            if (bullet.colliding_with(platforms) or not bullet.in_bounds()):
+                bullet.delete()
+                continue
 
-            # collision with walls and also for off-screen
-            for platform in platforms:
-                if bullet[0].colliderect(platform[0]):
-                    dead = True
-            if not 0 < bullet[0].y < window_height + 10 or not 0 < bullet[0].x < window_width + 10:
-                dead = True
+            # if bullet shot by the player, checks collision againt enemies
+            if bullet.owner == "player":
+                for enemy in Entity.enemies:
+                    if bullet.rect.colliderect(enemy.rect):
+                        enemy.current_health -= bullet.damage + (gold/100)
+                        bullet.delete()
+                        continue
 
-            # if it was shot by the player, collision is done to check to see if it hit the enemy
-            if bullet[3] == "player":
-                for enemy in enemies:
-                    if bullet[0].colliderect(enemy[0]):
-                        enemy[4][0] -= bullet[5] + (gold/100)
-                        dead = True
-
-            # if it was shot by the enemy, collision sees if it hit the player
-            if not dead and bullet[3] == "enemy":
-                if bullet[0].colliderect(player.rect) and not i_frames > 0:
-                    dead = True
-                    damage_counter = [20, bullet[5]]
-                    i_frames = 120  # if hit, get invincibility frames
-
-            if dead:
-                bullets.remove(bullet)
-            else:
-                pygame.draw.rect(window, (255, 255, 255), bullet[0])
+            # if bullet shot by an enemy, checks collision against player
+            if bullet.owner == "enemy":
+                if bullet.rect.colliderect(player.rect) and player.has_no_i_frames():
+                    damage_counter = [20, bullet.damage]
+                    player.give_i_frames()
+                    bullet.delete()
+                    continue
 
         # movement
         move_explosions()
-        player.move(i_frames)       # i_frames inputted to player to change color
-
-        # reduction of invincibility frames
-        if i_frames > 0:
-            i_frames -= 1
-
+        player.move()
+        
+        # drawing entities
+        for platform in platforms:
+            platform.draw(wall_color)
+        for bullet in bullets:
+            bullet.draw()
+        for explosion in explosions:
+            explosion.draw()
+        for enemy in Entity.enemies:
+            enemy.draw()
+        
         # rumble and health decrease
         bar_rumble = 0
         if damage_counter[0] > 0:                              # ticking counter down, taking damage
