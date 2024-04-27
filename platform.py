@@ -21,13 +21,13 @@ class Platform(GameObject):
             pygame.draw.rect(GameObject.window, (255, 100, 0), self.rect)
         if self.type == "upgrade":                # upgrade (unlock token) decides if it should exist
             # checks world location and if the ability is not unlocked before revealing self
-            if GameObject.world_y == 2 and GameObject.world_x == 1 and not GameObject.ability_statuses[0]:
+            if GameObject.world_y == 2 and GameObject.world_x == 1 and not GameObject.ability_statuses.double_jump:
                 pygame.draw.rect(GameObject.window, (200, 200, 0), self.rect)
-            elif GameObject.world_y == 3 and GameObject.world_x == 0 and not GameObject.ability_statuses[1]:
+            elif GameObject.world_y == 3 and GameObject.world_x == 0 and not GameObject.ability_statuses.dash:
                 pygame.draw.rect(GameObject.window, (200, 200, 0), self.rect)
-            elif GameObject.world_y == 3 and GameObject.world_x == 5 and not GameObject.ability_statuses[2]:
+            elif GameObject.world_y == 3 and GameObject.world_x == 5 and not GameObject.ability_statuses.blaster:
                 pygame.draw.rect(GameObject.window, (200, 200, 0), self.rect)
-            elif GameObject.world_y == 8 and GameObject.world_x == 0 and not GameObject.ability_statuses[3]:
+            elif GameObject.world_y == 8 and GameObject.world_x == 0 and not GameObject.ability_statuses.health_increase:
                 pygame.draw.rect(GameObject.window, (200, 200, 0), self.rect)
             else:
                 self.delete()

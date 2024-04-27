@@ -14,7 +14,7 @@ class Player(GameObject):
         self.y_velocity = 0
 
         # initial player health
-        self.max_health = 8 if GameObject.ability_statuses[3] else 5 
+        self.max_health = 8 if GameObject.ability_statuses.health_increase else 5 
         self.current_health = self.max_health
 
         # player abilities
@@ -72,7 +72,7 @@ class Player(GameObject):
             self.x_dir = -1
 
         # dashing
-        if key[K_SPACE] and self.dodge_counter >= 40 and GameObject.ability_statuses[1]:
+        if key[K_SPACE] and self.dodge_counter >= 40 and GameObject.ability_statuses.dash:
             self.x_velocity = self.x_dir * 25
             self.dodge_counter = 0
         if self.dodge_counter < 40:
@@ -90,7 +90,7 @@ class Player(GameObject):
             if key[K_w]:
                 if self.on_ground:
                     self.y_velocity = -12
-                elif self.double_jump and self.double_jump_counter > 5 and GameObject.ability_statuses[0]:
+                elif self.double_jump and self.double_jump_counter > 5 and GameObject.ability_statuses.double_jump:
                     self.y_velocity = -12
                     self.double_jump = False
         self.previous_w_value = key[K_w]
@@ -106,7 +106,7 @@ class Player(GameObject):
         self.move_linear(x_movement + self.x_velocity, 0)   # moving by x from movent press + velocity
         self.move_linear(0, self.y_velocity)
 
-        if GameObject.ability_statuses[2]:
+        if GameObject.ability_statuses.blaster:
             self.shoot()
 
     def shoot(self):
@@ -175,7 +175,7 @@ class Player(GameObject):
                         self.rect.top = platform.rect.bottom
 
                 if platform.type == "load":
-                    self.show_save = 100
+                    self.show_saved_text()
                     if GameObject.world_x == 0 and GameObject.world_y == 8:
                         self.save = 1
                     if GameObject.world_x == 2 and GameObject.world_y == 7:
@@ -185,7 +185,7 @@ class Player(GameObject):
     # called by main if the player is trying to leave the world bounds when not allowed
     def stop_escape(self):
         if not 0 < self.rect.x < (GameObject.window_width - 20) or not 0 < self.rect.y < (GameObject.window_height - 20):
-            self.show_exit = 100
+            self.show_exit_warning()
         if self.rect.x < 0:
             self.rect.x = 0
             self.x_velocity = 8
@@ -211,13 +211,59 @@ class Player(GameObject):
             self.rect.x = 663
             self.rect.y = 280
     
+
     # gives 2 seconds of invincibility
     def give_i_frames(self):
         self.i_frames = 120
-
+    
     # checks if has invincibility
     def has_no_i_frames(self):
         return self.i_frames <= 0
+
+
+    # caps velocity upwards at 5; used when transitioning to higher levels
+    def cap_upward_speed(self):
+        self.y_velocity = max(self.y_velocity, 5)
+    
+
+    # sets max health based on ability status : also clamps current health to the max health
+    def set_max_health(self):
+        self.max_health = 8 if GameObject.ability_statuses.health_increase else 5
+        self.current_health = min(self.current_health, self.max_health)
+
+    def reset_health(self):
+        self.current_health = self.max_health
+
+
+    # sets the exit status counter back up to max
+    def show_exit_warning(self):
+        self.exit_status = 100
+
+    # decrements the exit status counter by 1
+    def reduce_exit_warning_timer(self):
+        self.exit_status -= 1
+    
+    # tells if the exit timer has finished counting
+    def showing_exit_warning(self):
+        return (self.exit_status > 0)
+
+
+    # sets the save status counter back up to max
+    def show_saved_text(self):
+        self.show_save = 100
+
+    # decrements the save status counter by 1
+    def reduce_save_timer(self):
+        self.show_save -= 1
+    
+    # tells if the save timer has finished counting
+    def showing_saved_text(self):
+        return (self.show_save > 0)
+
+    # tells if the player has just saved
+    def just_saved(self):
+        return (self.show_save == 100)
+
 
     def draw(self):
         if self.i_frames > 0:  # if player has i_frames, draw a lighter blue.

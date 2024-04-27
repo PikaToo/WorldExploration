@@ -1,3 +1,5 @@
+from abilityStatusList import AbilityStatusList
+
 # game object: an object that is used by the game 
 #   gives the object access to the world state, the window, etc. 
 class GameObject(object):
@@ -9,7 +11,7 @@ class GameObject(object):
     world_x = 0
     world_y = 0
 
-    ability_statuses = []
+    ability_statuses = AbilityStatusList()
     boss_statuses = []
 
     def __init__(self):
@@ -25,7 +27,7 @@ class GameObject(object):
         GameObject.window_width = window_width
         GameObject.window_height = window_height
 
-    @staticmethod
+    @staticmethod   # also used by WorldMover
     def set_world_coordinates(world_x, world_y):
         GameObject.world_x = world_x
         GameObject.world_y = world_y

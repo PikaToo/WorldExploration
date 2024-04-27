@@ -28,14 +28,10 @@ class Pauser(GameObject):
         # showing unlocked abilities
         map_x = 10 
         map_y = 10
-        for ability in GameObject.ability_statuses:
+        for ability in GameObject.ability_statuses.list_form():
             ability_rect = pygame.Rect(map_x, map_y, 30, 30)
             pygame.draw.rect(GameObject.window, (100, 50, 50), ability_rect)
             if ability:
                 ability_rect = pygame.Rect(map_x + 5, map_y + 5, 20, 20)
                 pygame.draw.rect(GameObject.window, (200, 100, 100), ability_rect)
             map_x += 50
-
-        # updating display
-        pygame.display.update()
-    
