@@ -11,7 +11,7 @@ from bullet import Bullet
 from platform import Platform
 from player import Player
 from fader import Fader
-from minimap import Minimap
+from pauser import Pauser
 
 SAVE_FILE = "save_data/save_data.txt"
 
@@ -252,20 +252,17 @@ def main():
     previous_stage = 0
     damage_counter = [0, 0]
     player.current_health = 5
-    if ability_statuses[3]:
-        player.current_health = 8
     player.max_health = player.current_health
+
+    # initializing single objects
     fader = Fader()
+    pauser = Pauser()
 
     # FPS display stuff
     show_FPS = False
     FPS_list = [60, 60, 60, 60]     # FPS from last 4 frames
     previous_backspace = True
     
-    # pause stuff
-    holding_escape = False
-    paused = False
-
     # main loop
     while True:
         for event in pygame.event.get():
@@ -281,43 +278,18 @@ def main():
                 Platform.wall_color = potential_value[5]
         window.fill(background_color)
 
-        # pausing
-        key = pygame.key.get_pressed()
-
-        # map later
-        if not paused:
-            if key[K_ESCAPE] and not holding_escape:
-                paused = True
-                holding_escape = True
-
-        if paused:
-            # exiting
-            if key[K_ESCAPE] and not holding_escape:
-                holding_escape = True
-                paused = False
-            if not key[K_ESCAPE]:
-                holding_escape = False
-
+        # pause screen / pausing
+        pauser.check_for_pause()
+        if pauser.paused:
             # fading in
             fader.darken_fade()
             fader.display()
 
+            # showing pause text
             window.blit(font.render("Paused.", False, (255, 255, 255)), (50, 200))
 
-            world_map = Minimap(world, boss_statuses)
-            world_map.display()
-
-            map_x = 10  # showing abilities unlocked
-            map_y = 10
-            for ability in ability_statuses:
-                ability_rect = pygame.Rect(map_x, map_y, 30, 30)
-                pygame.draw.rect(window, (100, 50, 50), ability_rect)
-                if ability:
-                    ability_rect = pygame.Rect(map_x + 5, map_y + 5, 20, 20)
-                    pygame.draw.rect(window, (200, 100, 100), ability_rect)
-                map_x += 50
-
-            pygame.display.update()
+            # displaying pause screen
+            pauser.display(world)
             continue
         
         # setting total health based on abilities
@@ -394,6 +366,7 @@ def main():
         # every frame, update static variables (temp)
         GameObject.set_world_coordinates(world_x, world_y)
         GameObject.set_ability_statuses(ability_statuses)
+        GameObject.set_boss_statuses(boss_statuses)
 
         previous_stage = stage  # setting this for the next frame to use
         
@@ -559,6 +532,7 @@ def main():
         window.blit(small_font.render(level, False, (255, 255, 255)), (1171, 575))          # levels
         window.blit(small_font.render((str(gold)+"g"), False, (255, 255, 50)), (5, 575))    # gold
 
+        key = pygame.key.get_pressed()
         # toggling FPS display with backspace
         if key[K_BACKSPACE] and not previous_backspace:
             show_FPS = not show_FPS
