@@ -14,8 +14,8 @@ class Player(GameObject):
         self.y_velocity = 0
 
         # initial player health
-        self.current_health = 5
-        self.max_health = 5
+        self.max_health = 8 if GameObject.ability_statuses[3] else 5 
+        self.current_health = self.max_health
 
         # player abilities
         self.unlocked_double_jump = False
