@@ -2,7 +2,7 @@ import pygame
 from pygame.locals import *
 from entity import GameObject       # players are entities
 from bullet import Bullet       # player can make bullets
-from platform import Platform   # player needs to know platform locations
+from platformManager import Platform   # player needs to know platform locations
 
 class Player(GameObject):
     def __init__(self):
