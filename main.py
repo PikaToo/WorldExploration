@@ -3,6 +3,7 @@ import sys
 import random
 import level
 from pygame.locals import *
+from gameObject import GameObject
 from entity import Entity
 from enemy import Enemy
 from explosion import Explosion
@@ -10,6 +11,7 @@ from bullet import Bullet
 from platform import Platform
 from player import Player
 from fader import Fader
+from minimap import Minimap
 
 SAVE_FILE = "save_data/save_data.txt"
 
@@ -74,15 +76,12 @@ save_point = (0, boss_statuses, ability_statuses, 0)   # point, bosses, abilitie
 # consider moving pausing and some functions into a separate script
 
 # passing information to entity
-Entity.window = window
-Entity.window_height = window_height
-Entity.window_width = window_width
-Platform.window = window
-Fader.window = window
+GameObject.set_window(window)
+GameObject.set_window_size(window_width, window_height)
+GameObject.set_world_coordinates(world_x, world_y)
 
 # initializing the player
 player = Player()
-
 
 def save_game(point):
     global save_point
@@ -251,7 +250,6 @@ def main():
 
     # initial values
     previous_stage = 0
-    holding_escape = False
     damage_counter = [0, 0]
     player.current_health = 5
     if ability_statuses[3]:
@@ -264,6 +262,10 @@ def main():
     FPS_list = [60, 60, 60, 60]     # FPS from last 4 frames
     previous_backspace = True
     
+    # pause stuff
+    holding_escape = False
+    paused = False
+
     # main loop
     while True:
         for event in pygame.event.get():
@@ -281,79 +283,43 @@ def main():
 
         # pausing
         key = pygame.key.get_pressed()
-        valid_numbers = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]      # used for minimap
 
         # map later
-        if key[K_ESCAPE] and not holding_escape:
-            holding_escape = True
-            while True:
-                key = pygame.key.get_pressed()
-                for event in pygame.event.get():
-                    if event.type == QUIT:
-                        pygame.quit()
-                        sys.exit()
+        if not paused:
+            if key[K_ESCAPE] and not holding_escape:
+                paused = True
+                holding_escape = True
 
-                # exiting
-                if key[K_ESCAPE] and not holding_escape:
-                    holding_escape = True
-                    break
-                if not key[K_ESCAPE]:
-                    holding_escape = False
+        if paused:
+            # exiting
+            if key[K_ESCAPE] and not holding_escape:
+                holding_escape = True
+                paused = False
+            if not key[K_ESCAPE]:
+                holding_escape = False
 
-                # fading in
-                fader.darken_fade()
-                fader.display()
+            # fading in
+            fader.darken_fade()
+            fader.display()
 
-                window.blit(font.render("Paused.", False, (255, 255, 255)), (50, 200))
+            window.blit(font.render("Paused.", False, (255, 255, 255)), (50, 200))
 
-                # drawing minimap
-                load_zones = []
-                boss_zones = []
-                map_x = 300
-                map_y = 100
-                # massive for loop like the level creation, but with two more for the whole world.
-                for lev_row in world:
-                    for lev_value in lev_row:
-                        for row in lev_value:
-                            for value in row:
-                                if value == "W":                                # platforms are drawn
-                                    block = pygame.Rect(map_x, map_y, 1, 1)     # on-the-spot
-                                    pygame.draw.rect(window, (150, 150, 150), block)
-                                if value == "L" or value in valid_numbers:
-                                    x_middle = 16 + map_x - ((map_x - 300) % 40)  # loads/bosses added to list
-                                    y_middle = 6 + map_y - ((map_y - 100) % 20)
-                                    block = pygame.Rect(x_middle, y_middle, 8, 8)
-                                    if value == "L":
-                                        load_zones.append(block)
-                                    else:
-                                        if boss_statuses[int(value)]:  # boss only added if alive
-                                            boss_zones.append(block)
-                                map_x += 1
-                            map_x -= 40
-                            map_y += 1
-                        map_y -= 20
-                        map_x += 40
-                    map_y += 20
-                    map_x = 300
+            world_map = Minimap(world, boss_statuses)
+            world_map.display()
 
-                for load in load_zones:                         # loads/bosses drawn later (after walls) to be on top
-                    pygame.draw.rect(window, (255, 100, 0), load)
-                for boss in boss_zones:
-                    pygame.draw.rect(window, (255, 0, 0), boss)
-                player_loc = pygame.Rect(world_x * 40 + 315, world_y * 20 + 105, 10, 10)    # getting player location
-                pygame.draw.rect(window, (0, 0, 255), player_loc)                           # player drawn last
+            map_x = 10  # showing abilities unlocked
+            map_y = 10
+            for ability in ability_statuses:
+                ability_rect = pygame.Rect(map_x, map_y, 30, 30)
+                pygame.draw.rect(window, (100, 50, 50), ability_rect)
+                if ability:
+                    ability_rect = pygame.Rect(map_x + 5, map_y + 5, 20, 20)
+                    pygame.draw.rect(window, (200, 100, 100), ability_rect)
+                map_x += 50
 
-                map_x = 10  # showing abilities unlocked
-                map_y = 10
-                for ability in ability_statuses:
-                    ability_rect = pygame.Rect(map_x, map_y, 30, 30)
-                    pygame.draw.rect(window, (100, 50, 50), ability_rect)
-                    if ability:
-                        ability_rect = pygame.Rect(map_x + 5, map_y + 5, 20, 20)
-                        pygame.draw.rect(window, (200, 100, 100), ability_rect)
-                    map_x += 50
-
-                pygame.display.update()
+            pygame.display.update()
+            continue
+        
         # setting total health based on abilities
         player.max_health = 5
         if ability_statuses[3]:
@@ -366,14 +332,14 @@ def main():
             if player.exit_status:  # only can change level if exits are open (i.e. bosses are dead)
                 if player.rect.x < 10:  # moving by x
                     world_x -= 1
-                    player.rect.x = Entity.window_width - 30
-                if player.rect.x + 10 > Entity.window_width:
+                    player.rect.x = window_width - 30
+                if player.rect.x + 10 > window_width:
                     player.rect.x = 10
                     world_x += 1
                 if player.rect.y < 10:  # moving by y
                     world_y -= 1
-                    player.rect.y = Entity.window_height - 30
-                if player.rect.y + 10 > Entity.window_height:
+                    player.rect.y = window_height - 30
+                if player.rect.y + 10 > window_height:
                     player.rect.y = 30
                     world_y += 1
                     if player.y_velocity > 5:         # preventing high gravity upon level switch
@@ -426,13 +392,9 @@ def main():
                 wall_x = 0
 
         # every frame, update static variables (temp)
-        Platform.ability_statuses = ability_statuses
-        Player.ability_statuses = ability_statuses
-        Platform.world_x = world_x
-        Platform.world_y = world_y
-        player.world_x = world_x
-        player.world_y = world_y
-       
+        GameObject.set_world_coordinates(world_x, world_y)
+        GameObject.set_ability_statuses(ability_statuses)
+
         previous_stage = stage  # setting this for the next frame to use
         
         # enemy stuff

@@ -1,11 +1,8 @@
 import pygame
 from platform import Platform   # entities need to know platform locations
+from gameObject import GameObject
 
-class Entity(object):
-    window = None
-    window_height = 0
-    window_width = 0
-
+class Entity(GameObject):
     def __init__(self, x_pos, y_pos, size, color, x_velocity, y_velocity):
         self.rect = pygame.Rect(x_pos, y_pos, size, size)
         self.x_velocity = x_velocity
@@ -21,9 +18,9 @@ class Entity(object):
 
     # returns true if entity is inside world bounds
     def in_bounds(self): 
-        in_vertical_bounds = 0 < self.rect.y < Entity.window_height + self.size 
-        in_horizontal_bounds = 0 < self.rect.x < Entity.window_width + self.size
+        in_vertical_bounds = 0 < self.rect.y < GameObject.window_height + self.size 
+        in_horizontal_bounds = 0 < self.rect.x < GameObject.window_width + self.size
         return in_vertical_bounds and in_horizontal_bounds
 
     def draw(self):
-        pygame.draw.rect(Entity.window, self.color, self.rect)
+        pygame.draw.rect(GameObject.window, self.color, self.rect)

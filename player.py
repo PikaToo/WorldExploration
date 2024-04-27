@@ -1,12 +1,10 @@
 import pygame
 from pygame.locals import *
-from entity import Entity       # players are entities
+from entity import GameObject       # players are entities
 from bullet import Bullet       # player can make bullets
 from platform import Platform   # player needs to know platform locations
 
-class Player(Entity):
-    ability_statuses = [False, False, False, False, False]
-
+class Player(GameObject):
     def __init__(self):
         # initial position
         self.rect = pygame.Rect(100, 550, 20, 20)
@@ -54,9 +52,7 @@ class Player(Entity):
         self.save = 0
         self.FPS_clock = None
         self.FPS = 60
-        self.world_x = 0
-        self.world_y = 0
-
+    
     # moves player
     def move(self):
         key = pygame.key.get_pressed()
@@ -76,7 +72,7 @@ class Player(Entity):
             self.x_dir = -1
 
         # dashing
-        if key[K_SPACE] and self.dodge_counter >= 40 and Player.ability_statuses[1]:
+        if key[K_SPACE] and self.dodge_counter >= 40 and GameObject.ability_statuses[1]:
             self.x_velocity = self.x_dir * 25
             self.dodge_counter = 0
         if self.dodge_counter < 40:
@@ -94,7 +90,7 @@ class Player(Entity):
             if key[K_w]:
                 if self.on_ground:
                     self.y_velocity = -12
-                elif self.double_jump and self.double_jump_counter > 5 and Player.ability_statuses[0]:
+                elif self.double_jump and self.double_jump_counter > 5 and GameObject.ability_statuses[0]:
                     self.y_velocity = -12
                     self.double_jump = False
         self.previous_w_value = key[K_w]
@@ -110,7 +106,7 @@ class Player(Entity):
         self.move_linear(x_movement + self.x_velocity, 0)   # moving by x from movent press + velocity
         self.move_linear(0, self.y_velocity)
 
-        if Player.ability_statuses[2]:
+        if GameObject.ability_statuses[2]:
             self.shoot()
 
     def shoot(self):
@@ -180,27 +176,27 @@ class Player(Entity):
 
                 if platform.type == "load":
                     self.show_save = 100
-                    if self.world_x == 0 and self.world_y == 8:
+                    if GameObject.world_x == 0 and GameObject.world_y == 8:
                         self.save = 1
-                    if self.world_x == 2 and self.world_y == 7:
+                    if GameObject.world_x == 2 and GameObject.world_y == 7:
                         self.save = 2
 
 
     # called by main if the player is trying to leave the world bounds when not allowed
     def stop_escape(self):
-        if not 0 < self.rect.x < (Entity.window_width - 20) or not 0 < self.rect.y < (Entity.window_height - 20):
+        if not 0 < self.rect.x < (GameObject.window_width - 20) or not 0 < self.rect.y < (GameObject.window_height - 20):
             self.show_exit = 100
         if self.rect.x < 0:
             self.rect.x = 0
             self.x_velocity = 8
-        if self.rect.x > Entity.window_width - 20:
-            self.rect.x = Entity.window_width - 20
+        if self.rect.x > GameObject.window_width - 20:
+            self.rect.x = GameObject.window_width - 20
             self.x_velocity = -8
         if self.rect.y < 0:
             self.rect.y = 0
             self.y_velocity = 8
-        if self.rect.y > Entity.window_height - 20:
-            self.rect.y = Entity.window_height - 20
+        if self.rect.y > GameObject.window_height - 20:
+            self.rect.y = GameObject.window_height - 20
             self.y_velocity = -8
 
 
@@ -225,6 +221,6 @@ class Player(Entity):
 
     def draw(self):
         if self.i_frames > 0:  # if player has i_frames, draw a lighter blue.
-            pygame.draw.rect(Entity.window, (100, 100, 255), self.rect)
+            pygame.draw.rect(GameObject.window, (100, 100, 255), self.rect)
         elif self.i_frames != -50:
-            pygame.draw.rect(Entity.window, (0, 0, 255), self.rect)
+            pygame.draw.rect(GameObject.window, (0, 0, 255), self.rect)

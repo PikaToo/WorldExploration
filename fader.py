@@ -1,9 +1,8 @@
 import pygame
+from gameObject import GameObject
 
 # fader: used to handle fade-ins and fade-outs
-class Fader(object):
-    window = None
-
+class Fader(GameObject):
     def __init__(self):
         self.fade_screen = pygame.Surface((1200, 600))
         self.fade_screen.fill((0, 0, 0))
@@ -12,7 +11,7 @@ class Fader(object):
     # shows current fade screen
     def display(self):
         self.fade_screen.set_alpha(self.alpha)
-        Fader.window.blit(self.fade_screen, (0, 0))
+        GameObject.window.blit(self.fade_screen, (0, 0))
 
     # increases alpha by 20 (capped at 255)
     def darken_fade(self):
