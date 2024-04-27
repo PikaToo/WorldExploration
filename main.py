@@ -11,11 +11,11 @@ from entity import Entity
 from enemy import Enemy
 from explosion import Explosion
 from bullet import Bullet
-from platform import Platform
+from platformManager import Platform
 from player import Player
 from fader import Fader
 from pauseManager import PauseManager
-from worldMover import WorldMover
+from worldManager import WorldManager
 from fpsDisplay import FpsDisplay
 from menuManager import MenuManager
 
@@ -117,7 +117,7 @@ def main():
     # initializing single objects
     fader = Fader()
     pauser = PauseManager()
-    worldMover = WorldMover()
+    worldManager = WorldManager()
     fpsDisplay = FpsDisplay()
     player = Player()
     menuManager = MenuManager()
@@ -186,7 +186,7 @@ def main():
     
         # if player alive, check if need to swap stages
         if player.current_health > 0:
-            worldMover.update_world_coordinates(player)
+            worldManager.update_world_coordinates(player)
 
         # if the player is dead, reloads
         else:
@@ -244,7 +244,7 @@ def main():
         
         # enemy stuff
         player.exit_status = True
-        for enemy in Entity.enemies:
+        for enemy in Enemy.enemies:
             if enemy.current_health <= 0:                            # if death is true, does some things
                 gold += enemy.gold
                 Explosion(enemy.rect.x + (enemy.rect.width / 2), enemy.rect.y + (enemy.rect.height / 2), enemy.gold + 1)
@@ -317,7 +317,7 @@ def main():
             bullet.draw()
         for explosion in Explosion.explosions:
             explosion.draw()
-        for enemy in Entity.enemies:
+        for enemy in Enemy.enemies:
             enemy.draw()
         player.draw()
 

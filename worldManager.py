@@ -1,6 +1,10 @@
 from gameObject import GameObject
+from platformManager import Platform
+from entity import Entity
+from bullet import Bullet
+from explosion import Explosion
 
-class WorldMover(GameObject):
+class WorldManager(GameObject):
     def __init__(self):
         pass
 
@@ -25,3 +29,10 @@ class WorldMover(GameObject):
                 player.rect.y = 30
                 player.cap_upward_speed()  # to stop entering a room at really high jump speed
                 GameObject.set_world_coordinates(GameObject.world_x, GameObject.world_y + 1)
+
+    def empty_level(self):
+        Platform.platforms = []
+        Entity.enemies = []
+        Bullet.bullets = []
+        Explosion.explosions = []
+        pass
