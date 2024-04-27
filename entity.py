@@ -8,6 +8,7 @@ class Entity(GameObject):
         self.x_velocity = x_velocity
         self.y_velocity = y_velocity
         self.color = color
+        self.size = size
 
     # checks for collision against platforms
     def colliding_with_platforms(self):
