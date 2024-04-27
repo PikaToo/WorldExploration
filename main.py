@@ -16,6 +16,7 @@ from player import Player
 from fader import Fader
 from pauser import Pauser
 from worldMover import WorldMover
+from fpsDisplay import FpsDisplay
 
 SAVE_FILE = "save_data/save_data.txt"
 
@@ -262,12 +263,8 @@ def main():
     fader = Fader()
     pauser = Pauser()
     worldMover = WorldMover()
+    fpsDisplay = FpsDisplay()
 
-    # FPS display stuff
-    show_FPS = False
-    FPS_list = [60, 60, 60, 60]     # FPS from last 4 frames
-    previous_backspace = True
-    
     # main loop
     while True:
         for event in pygame.event.get():
@@ -523,24 +520,8 @@ def main():
         window.blit(small_font.render(level, False, (255, 255, 255)), (1171, 575))          # levels
         window.blit(small_font.render((str(gold)+"g"), False, (255, 255, 50)), (5, 575))    # gold
 
-        key = pygame.key.get_pressed()
-        # toggling FPS display with backspace
-        if key[K_BACKSPACE] and not previous_backspace:
-            show_FPS = not show_FPS
-        # getting average FPS for use in drawing
-        if show_FPS:
-            FPS_list.append(int(fpsClock.get_fps()))
-            del FPS_list[0]
-            average_FPS = sum(FPS_list) / len(FPS_list)
-            if average_FPS < 30:
-                color = (255, 0, 0)
-            elif average_FPS < 45:
-                color = (255, 255, 0)
-            else:
-                color = (255, 255, 255)
-            window.blit(font.render(f"FPS: {average_FPS}", True, color), pygame.Rect(window_width - 200, 0, 0, 0))
-
-        previous_backspace = key[K_BACKSPACE]
+        # DEBUG: shows  FPS if backspace is pressed
+        fpsDisplay.display(fpsClock, font)
 
         # default screen fade: try to clear up the screen
         fader.lighten_fade()
