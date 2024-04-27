@@ -172,7 +172,7 @@ def main():
 
         key = pygame.key.get_pressed()  # exit through escape
         # pause screen / pausing
-        pauser.check_for_pause(key[K_ESCAPE])
+        pauser.check_for_pause(key[K_ESCAPE], upgrader.upgrading)
         if pauser.paused:
             # fading in
             fader.darken_fade()
@@ -186,24 +186,17 @@ def main():
             pygame.display.update()
             continue
         
-        # player upgrade collision
-        for platform in Platform.platforms:
-            if platform.type == "upgrade" and player.rect.colliderect(platform.rect):  # if the platform was an upgrade token, calls another function
-                upgrader.enable_menu()
-        
-        if upgrader.showing_menu():
+        # player upgrade pausing
+        upgrader.check_for_pause(key[K_ESCAPE], Platform.platforms, player)
+        if upgrader.upgrading:
             fader.darken_fade()
+            fader.display()
             upgrader.display(font, medium_font, small_font)
 
-            # exit by pressing p
-            if key[K_p]:
-                upgrader.disable_menu()
-
-            else:
-                # don't do anything else- we're done here (paused)
-                fpsClock.tick(FPS)
-                pygame.display.update()
-                continue
+            # don't do anything else- we're done here (paused)
+            fpsClock.tick(FPS)
+            pygame.display.update()
+            continue
     
         # setting total health player based on abilities
         player.set_max_health()

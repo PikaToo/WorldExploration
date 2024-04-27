@@ -5,15 +5,16 @@ import pygame               # for drawing
 class Upgrader(GameObject):
     def __init__(self):
         self.upgrading = False
-
-    def enable_menu(self):
-        self.upgrading = True
-
-    def disable_menu(self):
-        self.upgrading = False
-
-    def showing_menu(self):
-        return self.upgrading
+    
+    def check_for_pause(self, pressing_escape, platform_list, player):
+        # enter menu by hitting platform
+        for platform in platform_list:
+            if platform.type == "upgrade" and player.rect.colliderect(platform.rect):
+                self.upgrading = True
+        
+        # leave menu by pressing escape
+        if pressing_escape:
+            self.upgrading = False
 
     def display(self, font, medium_font, small_font):
         if GameObject.world_y == 2 and GameObject.world_x == 1:
@@ -38,5 +39,5 @@ class Upgrader(GameObject):
 
         GameObject.window.blit(font.render(text1, False, (255, 255, 255)), (50, 200))
         GameObject.window.blit(medium_font.render(text2, False, (255, 255, 255)), (50, 280))
-        GameObject.window.blit(small_font.render("Press P to leave this menu.", False, (255, 255, 255)),
+        GameObject.window.blit(small_font.render("Press Escape to leave this menu.", False, (255, 255, 255)),
                     (50, 400))
