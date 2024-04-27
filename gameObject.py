@@ -10,6 +10,7 @@ class GameObject(object):
     world_y = 0
 
     ability_statuses = []
+    boss_statuses = []
 
     def __init__(self):
         pass
@@ -32,3 +33,7 @@ class GameObject(object):
     @staticmethod
     def set_ability_statuses(ability_statuses):
         GameObject.ability_statuses = ability_statuses
+    
+    @staticmethod
+    def set_boss_statuses(boss_statuses):
+        GameObject.boss_statuses = boss_statuses
