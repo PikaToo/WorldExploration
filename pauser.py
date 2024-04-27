@@ -7,9 +7,9 @@ class Pauser(GameObject):
         self.holding_escape = True
         self.paused = False
     
-    def check_for_pause(self, pressing_escape):
+    def check_for_pause(self, pressing_escape, upgrader_showing_menu):
         # toggles pause if pressing but not holding
-        if pressing_escape and not self.holding_escape:
+        if pressing_escape and not self.holding_escape and not upgrader_showing_menu:
             self.paused = not self.paused
 
         # giving information on this frame to next frame
