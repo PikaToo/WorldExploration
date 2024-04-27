@@ -279,7 +279,82 @@ def main():
                 Platform.wall_color = potential_value[5]
         window.fill(background_color)
 
-        # setting total health baesd on abilities
+        # pausing
+        key = pygame.key.get_pressed()
+        valid_numbers = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]      # used for minimap
+
+        # map later
+        if key[K_ESCAPE] and not holding_escape:
+            holding_escape = True
+            while True:
+                key = pygame.key.get_pressed()
+                for event in pygame.event.get():
+                    if event.type == QUIT:
+                        pygame.quit()
+                        sys.exit()
+
+                # exiting
+                if key[K_ESCAPE] and not holding_escape:
+                    holding_escape = True
+                    break
+                if not key[K_ESCAPE]:
+                    holding_escape = False
+
+                # fading in
+                fader.darken_fade()
+                fader.display()
+
+                window.blit(font.render("Paused.", False, (255, 255, 255)), (50, 200))
+
+                # drawing minimap
+                load_zones = []
+                boss_zones = []
+                map_x = 300
+                map_y = 100
+                # massive for loop like the level creation, but with two more for the whole world.
+                for lev_row in world:
+                    for lev_value in lev_row:
+                        for row in lev_value:
+                            for value in row:
+                                if value == "W":                                # platforms are drawn
+                                    block = pygame.Rect(map_x, map_y, 1, 1)     # on-the-spot
+                                    pygame.draw.rect(window, (150, 150, 150), block)
+                                if value == "L" or value in valid_numbers:
+                                    x_middle = 16 + map_x - ((map_x - 300) % 40)  # loads/bosses added to list
+                                    y_middle = 6 + map_y - ((map_y - 100) % 20)
+                                    block = pygame.Rect(x_middle, y_middle, 8, 8)
+                                    if value == "L":
+                                        load_zones.append(block)
+                                    else:
+                                        if boss_statuses[int(value)]:  # boss only added if alive
+                                            boss_zones.append(block)
+                                map_x += 1
+                            map_x -= 40
+                            map_y += 1
+                        map_y -= 20
+                        map_x += 40
+                    map_y += 20
+                    map_x = 300
+
+                for load in load_zones:                         # loads/bosses drawn later (after walls) to be on top
+                    pygame.draw.rect(window, (255, 100, 0), load)
+                for boss in boss_zones:
+                    pygame.draw.rect(window, (255, 0, 0), boss)
+                player_loc = pygame.Rect(world_x * 40 + 315, world_y * 20 + 105, 10, 10)    # getting player location
+                pygame.draw.rect(window, (0, 0, 255), player_loc)                           # player drawn last
+
+                map_x = 10  # showing abilities unlocked
+                map_y = 10
+                for ability in ability_statuses:
+                    ability_rect = pygame.Rect(map_x, map_y, 30, 30)
+                    pygame.draw.rect(window, (100, 50, 50), ability_rect)
+                    if ability:
+                        ability_rect = pygame.Rect(map_x + 5, map_y + 5, 20, 20)
+                        pygame.draw.rect(window, (200, 100, 100), ability_rect)
+                    map_x += 50
+
+                pygame.display.update()
+        # setting total health based on abilities
         player.max_health = 5
         if ability_statuses[3]:
             player.max_health = 8
@@ -522,82 +597,6 @@ def main():
         window.blit(small_font.render(level, False, (255, 255, 255)), (1171, 575))          # levels
         window.blit(small_font.render((str(gold)+"g"), False, (255, 255, 50)), (5, 575))    # gold
 
-        # pausing
-        key = pygame.key.get_pressed()
-        valid_numbers = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]      # used for minimap
-
-        # map later
-        if key[K_ESCAPE] and not holding_escape:
-            holding_escape = True
-            while True:
-                key = pygame.key.get_pressed()
-                for event in pygame.event.get():
-                    if event.type == QUIT:
-                        pygame.quit()
-                        sys.exit()
-
-                # exiting
-                if key[K_ESCAPE] and not holding_escape:
-                    holding_escape = True
-                    break
-                if not key[K_ESCAPE]:
-                    holding_escape = False
-
-                # fading in
-                fader.darken_fade()
-                fader.display()
-
-                window.blit(font.render("Paused.", False, (255, 255, 255)), (50, 200))
-
-                # drawing minimap
-                load_zones = []
-                boss_zones = []
-                map_x = 300
-                map_y = 100
-                # massive for loop like the level creation, but with two more for the whole world.
-                for lev_row in world:
-                    for lev_value in lev_row:
-                        for row in lev_value:
-                            for value in row:
-                                if value == "W":                                # platforms are drawn
-                                    block = pygame.Rect(map_x, map_y, 1, 1)     # on-the-spot
-                                    pygame.draw.rect(window, (150, 150, 150), block)
-                                if value == "L" or value in valid_numbers:
-                                    x_middle = 16 + map_x - ((map_x - 300) % 40)  # loads/bosses added to list
-                                    y_middle = 6 + map_y - ((map_y - 100) % 20)
-                                    block = pygame.Rect(x_middle, y_middle, 8, 8)
-                                    if value == "L":
-                                        load_zones.append(block)
-                                    else:
-                                        if boss_statuses[int(value)]:  # boss only added if alive
-                                            boss_zones.append(block)
-                                map_x += 1
-                            map_x -= 40
-                            map_y += 1
-                        map_y -= 20
-                        map_x += 40
-                    map_y += 20
-                    map_x = 300
-
-                for load in load_zones:                         # loads/bosses drawn later (after walls) to be on top
-                    pygame.draw.rect(window, (255, 100, 0), load)
-                for boss in boss_zones:
-                    pygame.draw.rect(window, (255, 0, 0), boss)
-                player_loc = pygame.Rect(world_x * 40 + 315, world_y * 20 + 105, 10, 10)    # getting player location
-                pygame.draw.rect(window, (0, 0, 255), player_loc)                           # player drawn last
-
-                map_x = 10  # showing abilities unlocked
-                map_y = 10
-                for ability in ability_statuses:
-                    ability_rect = pygame.Rect(map_x, map_y, 30, 30)
-                    pygame.draw.rect(window, (100, 50, 50), ability_rect)
-                    if ability:
-                        ability_rect = pygame.Rect(map_x + 5, map_y + 5, 20, 20)
-                        pygame.draw.rect(window, (200, 100, 100), ability_rect)
-                    map_x += 50
-
-                pygame.display.update()
-
         # toggling FPS display with backspace
         if key[K_BACKSPACE] and not previous_backspace:
             show_FPS = not show_FPS
@@ -618,11 +617,9 @@ def main():
             holding_escape = False
         previous_backspace = key[K_BACKSPACE]
 
-
         # default screen fade: try to clear up the screen
         fader.lighten_fade()
         fader.display()
-        print(fader.alpha)
 
         # grabs values from a ticker in player which get set to 100 upon touching something.
         # used for persistent text boxes, such as after touching a save point.
