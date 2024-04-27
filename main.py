@@ -45,10 +45,6 @@ ability_statuses = AbilityStatusList()
 world = level.level()
 gold = 0
 
-# current position on the map. starts at 0, 0, the top left.
-world_y = 0
-world_x = 0
-
 save_point = (0, boss_statuses, ability_statuses, 0)   # point, bosses, abilities, gold, minimap
 
 # TODO:
@@ -84,7 +80,6 @@ save_point = (0, boss_statuses, ability_statuses, 0)   # point, bosses, abilitie
 # passing information to entity
 GameObject.set_window(window)
 GameObject.set_window_size(window_width, window_height)
-GameObject.set_world_coordinates(world_x, world_y)
 
 def save_game(point):
     global save_point
@@ -92,22 +87,22 @@ def save_game(point):
 
 def load_game(save_data, player):
     # sets the load data and configures the world x/y and player abilities based on that.
-    global world_y, world_x, boss_statuses, ability_statuses, gold
+    global boss_statuses, ability_statuses, gold
     if save_data[0] == 0:
-        world_x = 0
-        world_y = 0
+        GameObject.world_x = 0
+        GameObject.world_y = 0
     if save_data[0] == 1:
-        world_x = 0
-        world_y = 8
+        GameObject.world_x = 0
+        GameObject.world_y = 8
     if save_data[0] == 2:
-        world_x = 2
-        world_y = 7
+        GameObject.world_x = 2
+        GameObject.world_y = 7
     if save_data[0] == 98:
-        world_x = 0
-        world_y = 8
+        GameObject.world_x = 0
+        GameObject.world_y = 8
     if save_data[0] == 99:
-        world_x = 4
-        world_y = 11
+        GameObject.world_x = 4
+        GameObject.world_y = 11
     boss_statuses = save_data[1]
     ability_statuses = save_data[2]
     gold = save_data[3]
@@ -140,7 +135,8 @@ def main():
         fpsClock.tick(FPS)
         pygame.display.update()
 
-    global boss_statuses, gold, world_x, world_y
+
+    global boss_statuses, gold
     # setting theme colors based on location, using a list where 1st two values are y-value range and 3rd is color
     background_color_palette = [
         [0, 5,  (0, 0, 0),     0, 4,   (100, 100, 100)],    # tutorial colors
@@ -150,8 +146,8 @@ def main():
     background_color = (255, 100, 100)
 
     # initial values
-    previous_stage = 0
     damage_counter = [0, 0]
+    worldManager.create_level(world)
     
     # main loop
     while True:
@@ -162,9 +158,9 @@ def main():
         
         # iterating through the color list defined earlier.
         for potential_value in background_color_palette:
-            if potential_value[0] <= world_y <= potential_value[1]:     # first half is background color
+            if potential_value[0] <= GameObject.world_y <= potential_value[1]:     # first half is background color
                 background_color = potential_value[2]
-            if potential_value[3] <= world_y <= potential_value[4]:     # second half is wall color
+            if potential_value[3] <= GameObject.world_y <= potential_value[4]:     # second half is wall color
                 Platform.wall_color = potential_value[5]
         window.fill(background_color)
 
@@ -194,54 +190,14 @@ def main():
             load_game(save_point)
 
         # building the stage
-        if not (world_y + 1) > len(world) and not (world_x + 1) > len(world[0]):    # making sure level exists
-            stage = world[world_y][world_x]
-        if stage != previous_stage:
-            # TODO: convert these to static methods
-            Platform.platforms = []
-            Entity.enemies = []
-            Bullet.bullets = []
-            Explosion.explosions = []
-            wall_x = wall_y = 0
-
+        if worldManager.world_changed:
+            # fade to black
             fader.set_darkest_fade()
+            
+            # first delete all entities in current stage, then make new stage
+            worldManager.empty_level()
+            worldManager.create_level(world)
 
-            for row in stage:
-                for value in row:
-                    if value == "W":
-                        Platform(wall_x, wall_y, 30, "platform")
-                    if value == "U":
-                        Platform(wall_x + 5, wall_y + 5, 15, "upgrade")
-                    if value == "L":
-                        Platform(wall_x + 5, wall_y + 5, 15, "load")
-                    # Enemy(x_pos, y_pos, color, size, counter, enemy_AI, enemy_health, boss, other, damage)
-                    if value == "0" and boss_statuses[0]:
-                        Enemy(wall_x, wall_y, (255, 0, 0), 20, -60, "Target", 8, 0, False, 1)
-                    if value == "1" and boss_statuses[1]:
-                        Enemy(wall_x, wall_y, (100, 200, 100), 25, -60, "Harmer", 20, 1, False, 1)
-                    if value == "F":
-                        Enemy(wall_x, wall_y, (100, 50, 0), 20, -60, "Follower", 5, -1, False, 1)
-                    if value == "S":
-                        Enemy(wall_x, wall_y, (100, 100, 0), 30, -60, "Shooter", 3, -1, False, 1)
-                    if value == "B":
-                        Enemy(wall_x, wall_y, (255, 200, 80), 25, -60, "Bird", 3, -1, False, 1)
-                    if value == "I":
-                        Enemy(wall_x, wall_y, (200, 200, 255), 20, -60, "Icey Follower", 8, -1, False, 1)
-                    if value == "C":
-                        Enemy(wall_x, wall_y, (150, 150, 255), 30, -60, "Cold Bird", 6, -1, False, 1)
-                    if value == "P":
-                        Enemy(wall_x, wall_y, (40, 40, 40), 40, -60, "Pewer (Cannon)", 15, -1, False, 2)
-                    wall_x += 30
-                wall_y += 30
-                wall_x = 0
-
-        # every frame, update static variables (temp)
-        GameObject.set_world_coordinates(world_x, world_y)
-        GameObject.set_ability_statuses(ability_statuses)
-        GameObject.set_boss_statuses(boss_statuses)
-
-        previous_stage = stage  # setting this for the next frame to use
-        
         # enemy stuff
         player.exit_status = True
         for enemy in Enemy.enemies:
@@ -299,7 +255,7 @@ def main():
         player.update()  
 
         # if exits are closed, shows text and prevents movement if player tries to leave bounds
-        if not player.exit_status:              
+        if not player.exit_status:
             if not player.in_bounds():
                 player.show_exit_warning()
             player.stop_escape()
@@ -359,7 +315,7 @@ def main():
             if i > player.current_health and damage_counter[1] < 0:                       # growing animation if restoring health
                 pygame.draw.circle(window, (255, 50, 50), (x_pos, y_pos), 10 - (0.5 * damage_counter[0]))
 
-        level = (chr(65 + world_x) + str('%02d' % (world_y + 1)))           # getting level value from numbers
+        level = (chr(65 + GameObject.world_x) + str('%02d' % (GameObject.world_y + 1)))           # getting level value from numbers
         window.blit(small_font.render(level, False, (255, 255, 255)), (1171, 575))          # levels
         window.blit(small_font.render((str(gold)+"g"), False, (255, 255, 50)), (5, 575))    # gold
 
@@ -384,6 +340,10 @@ def main():
             text = medium_font.render("Exit is closed until the boss is defeated.", False, (255, 100, 100))
             text.set_alpha(player.show_exit * 10)
             window.blit(text, (700, 566))
+        
+        # every frame, update static variables (temp)
+        GameObject.set_ability_statuses(ability_statuses)
+        GameObject.set_boss_statuses(boss_statuses)
 
         # ticks at FPS, updates screen to show new drawings
         fpsClock.tick(FPS)
