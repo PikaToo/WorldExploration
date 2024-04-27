@@ -2,7 +2,7 @@ from gameObject import GameObject
 from minimap import Minimap
 import pygame
 
-class Pauser(GameObject):
+class PauseManager(GameObject):
     def __init__(self):
         self.holding_escape = True
 

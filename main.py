@@ -14,7 +14,7 @@ from bullet import Bullet
 from platform import Platform
 from player import Player
 from fader import Fader
-from pauser import Pauser
+from pauserManager import PauseManager
 from worldMover import WorldMover
 from fpsDisplay import FpsDisplay
 from menuManager import MenuManager
@@ -116,7 +116,7 @@ def load_game(save_data, player):
 def main():
     # initializing single objects
     fader = Fader()
-    pauser = Pauser()
+    pauser = PauseManager()
     worldMover = WorldMover()
     fpsDisplay = FpsDisplay()
     player = Player()
@@ -168,9 +168,9 @@ def main():
                 Platform.wall_color = potential_value[5]
         window.fill(background_color)
 
-        key = pygame.key.get_pressed()  # exit through escape
         # pause screen / pausing
-        pauser.check_for_pause(key[K_ESCAPE], Platform.platforms, player)
+        key = pygame.key.get_pressed()  # exit through escape
+        pauser.check_for_pause(key[K_ESCAPE], Platform.platforms, player)   # TODO: have this not do the giving upgrade part
         if pauser.manually_paused or pauser.upgrader_paused:
             # fading in
             fader.darken_fade()
