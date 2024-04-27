@@ -15,6 +15,7 @@ from platform import Platform
 from player import Player
 from fader import Fader
 from pauser import Pauser
+from upgrader import Upgrader
 from worldMover import WorldMover
 from fpsDisplay import FpsDisplay
 
@@ -262,6 +263,7 @@ def main():
     # initializing single objects
     fader = Fader()
     pauser = Pauser()
+    upgrader = Upgrader()
     worldMover = WorldMover()
     fpsDisplay = FpsDisplay()
 
@@ -280,8 +282,9 @@ def main():
                 Platform.wall_color = potential_value[5]
         window.fill(background_color)
 
+        key = pygame.key.get_pressed()  # exit through p
         # pause screen / pausing
-        pauser.check_for_pause()
+        pauser.check_for_pause(key[K_ESCAPE])
         if pauser.paused:
             # fading in
             fader.darken_fade()
@@ -290,11 +293,30 @@ def main():
             # displaying pause screen with its world minimap
             pauser.display(world, font)
 
-            # don't do anything else- we're done here
+            # don't do anything else- we're done here (paused)
             fpsClock.tick(FPS)
             pygame.display.update()
             continue
         
+        # player upgrade collision
+        for platform in Platform.platforms:
+            if platform.type == "upgrade" and player.rect.colliderect(platform.rect):  # if the platform was an upgrade token, calls another function
+                upgrader.enable_menu()
+        
+        if upgrader.showing_menu():
+            fader.darken_fade()
+            upgrader.display(font, medium_font, small_font)
+
+            # exit by pressing p
+            if key[K_p]:
+                upgrader.disable_menu()
+
+            else:
+                # don't do anything else- we're done here (paused)
+                fpsClock.tick(FPS)
+                pygame.display.update()
+                continue
+    
         # setting total health player based on abilities
         player.set_max_health()
 
@@ -311,6 +333,7 @@ def main():
         if not (world_y + 1) > len(world) and not (world_x + 1) > len(world[0]):    # making sure level exists
             stage = world[world_y][world_x]
         if stage != previous_stage:
+            # TODO: convert these to static methods
             Platform.platforms = []
             Entity.enemies = []
             Bullet.bullets = []
@@ -411,47 +434,6 @@ def main():
             explosion.move()
         player.move()  
 
-        # player upgrade collision
-        for platform in Platform.platforms:
-            if platform.type == "upgrade" and player.rect.colliderect(platform.rect):  # if the platform was an upgrade token, calls another function
-                text1 = ""; text2 = ""
-                if world_y == 2 and world_x == 1:
-                    ability_statuses.double_jump = True
-                    text1 = "Unlocked double jump."
-                    text2 = "Press W while in the air to use."
-                if world_y == 3 and world_x == 0:
-                    ability_statuses.dash = True
-                    text1 = "Unlocked dash."
-                    text2 = "Press space to use."
-                if world_y == 3 and world_x == 5:
-                    ability_statuses.blaster = True
-                    text1 = "Unlocked blaster."
-                    text2 = "Press arrow keys or click the mouse to use."
-                if world_y == 8 and world_x == 0:
-                    ability_statuses.health_increase = True
-                    text1 = "Health has been increased."
-                    text2 = "You now have more health."
-
-                while True:
-                    for event in pygame.event.get():
-                        if event.type == QUIT:
-                            pygame.quit()
-                            sys.exit()
-
-                    fader.darken_fade()
-                    if fader.at_darkest():  # shows text once fade fully present
-                        window.blit(font.render(text1, False, (255, 255, 255)), (50, 200))
-                        window.blit(medium_font.render(text2, False, (255, 255, 255)), (50, 280))
-                        window.blit(small_font.render("Press P to leave this menu.", False, (255, 255, 255)),
-                                    (50, 400))
-
-                    key = pygame.key.get_pressed()  # exit through p
-                    if key[K_p]:
-                        break
-
-                    fpsClock.tick(FPS)
-                    pygame.display.update()
-    
         # if exits are closed, shows text and prevents movement if player tries to leave bounds
         if not player.exit_status:              
             if not player.in_bounds():
