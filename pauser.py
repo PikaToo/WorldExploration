@@ -20,7 +20,10 @@ class Pauser(GameObject):
         self.holding_escape = key[K_ESCAPE]
 
 
-    def display(self, world):
+    def display(self, world, font):
+        # showing pause text
+        GameObject.window.blit(font.render("Paused.", False, (255, 255, 255)), (50, 200))
+        
         # showing world map
         world_map = Minimap(world, GameObject.boss_statuses)
         world_map.display()

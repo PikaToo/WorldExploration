@@ -287,11 +287,8 @@ def main():
             fader.darken_fade()
             fader.display()
 
-            # showing pause text
-            window.blit(font.render("Paused.", False, (255, 255, 255)), (50, 200))
-
             # displaying pause screen with its world minimap
-            pauser.display(world)
+            pauser.display(world, font)
 
             # don't do anything else- we're done here
             fpsClock.tick(FPS)
