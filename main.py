@@ -170,23 +170,20 @@ def main():
 
         # pause screen / pausing
         key = pygame.key.get_pressed()  # exit through escape
-        pauser.check_for_pause(key[K_ESCAPE], Platform.platforms, player)   # TODO: have this not do the giving upgrade part
+        pauser.check_for_pause(key[K_ESCAPE], Platform.platforms, player)
         if pauser.manually_paused or pauser.upgrader_paused:
             # fading in
             fader.darken_fade()
             fader.display()
 
-            # displaying pause screen with its world minimap
+            # displaying pause screen
             pauser.display(world, font, medium_font, small_font)
 
-            # don't do anything else- we're done here (paused)
+            # don't do anything else- we're done here (continue causes the pause effect)
             fpsClock.tick(FPS)
             pygame.display.update()
             continue
     
-        # setting total health player based on abilities
-        player.set_max_health()
-
         # if player alive, check if need to swap stages
         if player.current_health > 0:
             worldMover.update_world_coordinates(player)
@@ -299,7 +296,7 @@ def main():
         # movement
         for explosion in Explosion.explosions:
             explosion.move()
-        player.move()  
+        player.update()  
 
         # if exits are closed, shows text and prevents movement if player tries to leave bounds
         if not player.exit_status:              

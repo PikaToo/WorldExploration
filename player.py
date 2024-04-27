@@ -53,13 +53,17 @@ class Player(GameObject):
         self.FPS_clock = None
         self.FPS = 60
     
-    # moves player
-    def move(self):
+    # updates player by moving and applying anything required
+    def update(self):
         key = pygame.key.get_pressed()
 
         # updates i_frames
         if self.i_frames > 0:
             self.i_frames -= 1
+
+        # ensures player health is correct and caps current to not be greater than max
+        self.max_health = 8 if GameObject.ability_statuses.health_increase else 5
+        self.current_health = min(self.current_health, self.max_health)
 
         # x-movement from pressing movement keys
         # first sets values to 0 in case no button is pressed
@@ -225,12 +229,6 @@ class Player(GameObject):
     def cap_upward_speed(self):
         self.y_velocity = max(self.y_velocity, 5)
     
-
-    # sets max health based on ability status : also clamps current health to the max health
-    def set_max_health(self):
-        self.max_health = 8 if GameObject.ability_statuses.health_increase else 5
-        self.current_health = min(self.current_health, self.max_health)
-
     def reset_health(self):
         self.current_health = self.max_health
 
