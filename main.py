@@ -9,6 +9,7 @@ from explosion import Explosion
 from bullet import Bullet
 from platform import Platform
 from player import Player
+from fader import Fader
 
 SAVE_FILE = "save_data/save_data.txt"
 
@@ -77,6 +78,7 @@ Entity.window = window
 Entity.window_height = window_height
 Entity.window_width = window_width
 Platform.window = window
+Fader.window = window
 
 # initializing the player
 player = Player()
@@ -255,9 +257,7 @@ def main():
     if ability_statuses[3]:
         player.current_health = 8
     player.max_health = player.current_health
-    fade_counter = 0                            # these 3 are fading stuff initial values
-    fade_screen = pygame.Surface((1200, 600))   # making a surface to get a transparent rect
-    fade_screen.fill((0, 0, 0))                 # making surface black
+    fader = Fader()
 
     # FPS display stuff
     show_FPS = False
@@ -318,7 +318,8 @@ def main():
             Bullet.bullets = []
             Explosion.explosions = []
             wall_x = wall_y = 0
-            fade_counter = 10
+
+            fader.set_darkest_fade()
 
             for row in stage:
                 for value in row:
@@ -436,21 +437,14 @@ def main():
                     text1 = "Health has been increased."
                     text2 = "You now have more health."
 
-                # getting a surface for the fade into black effect
-                s = pygame.Surface((1200, 600))  # making a surface to get a transparent rect
-                s.set_alpha(12)  # alpha level
-                s.fill((0, 0, 0))  # black
-
-                upgrade_fade_counter = 0
                 while True:
                     for event in pygame.event.get():
                         if event.type == QUIT:
                             pygame.quit()
                             sys.exit()
 
-                    if upgrade_fade_counter < 50:  # first 50 ticks are on fading to black
-                        window.blit(s, (0, 0))
-                    if upgrade_fade_counter > 50:  # after 50 ticks, shows text.
+                    fader.darken_fade()
+                    if fader.at_darkest():  # shows text once fade fully present
                         window.blit(font.render(text1, False, (255, 255, 255)), (50, 200))
                         window.blit(small_font.render("Press P to leave this menu.", False, (255, 255, 255)),
                                     (50, 400))
@@ -462,7 +456,6 @@ def main():
 
                     fpsClock.tick(FPS)
                     pygame.display.update()
-                    upgrade_fade_counter += 1
     
         # if exits are closed, shows text and prevents movement if player tries to leave bounds
         if not player.exit_status:              
@@ -536,8 +529,6 @@ def main():
         # map later
         if key[K_ESCAPE] and not holding_escape:
             holding_escape = True
-            fade_counter = 0                        # reusing fade values here
-            fade_screen.set_alpha(20)
             while True:
                 key = pygame.key.get_pressed()
                 for event in pygame.event.get():
@@ -548,17 +539,14 @@ def main():
                 # exiting
                 if key[K_ESCAPE] and not holding_escape:
                     holding_escape = True
-                    fade_counter = 6  # after leaving, fades back in
                     break
                 if not key[K_ESCAPE]:
                     holding_escape = False
 
-                # fade
-                while fade_counter < 30:
-                    fade_screen.set_alpha(fade_counter * 20)
-                    fade_counter += 1
+                # fading in
+                fader.darken_fade()
+                fader.display()
 
-                window.blit(fade_screen, (0, 0))
                 window.blit(font.render("Paused.", False, (255, 255, 255)), (50, 200))
 
                 # drawing minimap
@@ -631,12 +619,10 @@ def main():
         previous_backspace = key[K_BACKSPACE]
 
 
-        # screen fade
-        fade_screen.set_alpha(0)
-        if fade_counter > 0:
-            fade_screen.set_alpha(fade_counter * 40)
-            fade_counter -= 1
-        window.blit(fade_screen, (0, 0))
+        # default screen fade: try to clear up the screen
+        fader.lighten_fade()
+        fader.display()
+        print(fader.alpha)
 
         # grabs values from a ticker in player which get set to 100 upon touching something.
         # used for persistent text boxes, such as after touching a save point.
