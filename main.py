@@ -18,6 +18,7 @@ from pauser import Pauser
 from upgrader import Upgrader
 from worldMover import WorldMover
 from fpsDisplay import FpsDisplay
+from menuManager import MenuManager
 
 SAVE_FILE = "save_data/save_data.txt"
 
@@ -86,15 +87,11 @@ GameObject.set_window(window)
 GameObject.set_window_size(window_width, window_height)
 GameObject.set_world_coordinates(world_x, world_y)
 
-# initializing the player
-player = Player()
-
 def save_game(point):
     global save_point
     save_point = (point, boss_statuses, ability_statuses, gold)
 
-
-def load_game(save_data):
+def load_game(save_data, player):
     # sets the load data and configures the world x/y and player abilities based on that.
     global world_y, world_x, boss_statuses, ability_statuses, gold
     if save_data[0] == 0:
@@ -117,130 +114,34 @@ def load_game(save_data):
     gold = save_data[3]
     player.player_pos_change(save_data[0])
 
-
-# function that runs when asked to input a load, only used after menu. 
-def ask_for_load():
-    name = ""
-    # temp_code = 9901 1111 1111 1111 0000 0000
-    # name = "990011111111111100000000"
-    # name = "980011111111100000000000"
-    name = "980011111111111000000000"
-    message = font.render("Enter your load code.", True, (255, 255, 255))
-    valid_numbers = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
-    while True:
-        for evt in pygame.event.get():
-            if evt.type == QUIT:
-                pygame.quit()
-                sys.exit()
-
-            if evt.type == KEYDOWN:
-                if str(evt.unicode) in valid_numbers and len(name) < 24:
-                    name = name + str(evt.unicode)          # types numbers
-                if evt.key == K_BACKSPACE:
-                    name = name[:-1]                        # backspaces
-                if evt.key == K_RETURN:
-                    if len(name) != 24:                     # code must be 20 characters to work
-                        name = ""
-                        message = font.render("Invalid load code.", True, (255, 255, 255))
-                    else:
-                        # processes the save data
-                        s_point = int(name[0] + name[1])                        # name[0 -> 1] used for save point.
-                                                                                # 2 values
-                        # initial values for the loading loop
-                        s_ability_list = []
-                        s_boss_list = []
-
-                        i = 2
-                        while i <= 19:
-                            if i <= 11:
-                                if int(name[i]) == 1:                   # name[2 -> 11] used for bosses
-                                    s_boss_list.append(True)            # 10 values
-                                else:
-                                    s_boss_list.append(False)
-                            elif i <= 19:                               # name[12 -> 19] used for abilities
-                                if int(name[i]) == 1:                   # 8 values
-                                    s_ability_list.append(True)
-                                else:
-                                    s_ability_list.append(False)
-                            i += 1
-
-                        s_gold = int(name[20] + name[21] + name[22] + name[23])     # name[20 - 23] used for gold
-                                                                                    # 4 values
-                        save_point = (s_point, s_boss_list, AbilityStatusList(s_ability_list), s_gold)
-
-                        return save_point # breaks loop
-
-        # formatting the load code to make it more legible
-        formatted_code = ""
-        iteration = 0
-        for character in name:
-            iteration += 1
-            formatted_code += character
-            if iteration % 4 == 0:              # can't just check length of the formatted_code since it changes
-                formatted_code += "  "
-
-        # drawing everything
-        window.fill((0, 0, 0))
-        message_rect = message.get_rect()
-        message_rect.x = 400
-        message_rect.y = 200
-        window.blit(message, message_rect)
-        message_rect.x = 300
-        message_rect.y = 250
-        window.blit(font.render(formatted_code, True, (200, 200, 200)), message_rect)
-        pygame.display.flip()
-
-
-def main_menu():
-    # getting locations of all buttons
-    x_location = 340                                                # used to easily change their x later if needed
-    new_rect = pygame.Rect(x_location, 500, 185, 50)
-    load_rect = pygame.Rect(x_location + 300, 500, 185, 50)
-    back_new_rect = pygame.Rect(x_location - 5, 495, 195, 60)
-    back_load_rect = pygame.Rect(x_location + 295,  495, 195, 60)
-
-    while True:
-        for evt in pygame.event.get():
-            if evt.type == QUIT:
-                pygame.quit()
-                sys.exit()
-        mouse_x, mouse_y = pygame.mouse.get_pos()                   # getting mouse pos for collision checks later
-        mouse_rect = pygame.Rect(mouse_x, mouse_y, 1, 1)
-
-        window.fill((0, 0, 0))
-
-        load_back_color = new_back_color = (30, 30, 30)             # setting background color for both buttons
-
-        if mouse_rect.colliderect(new_rect):                        # if button collides, changes back color
-            new_back_color = (200, 200, 50)
-            if pygame.mouse.get_pressed()[0]:                       # ends screen if new is clicked
-                return None   # no save data 
-        if mouse_rect.colliderect(load_rect):                       # switches to load screen if load is clicked
-            load_back_color = (200, 200, 50)
-            if pygame.mouse.get_pressed()[0]:
-                return ask_for_load()  # save data
-
-        # drawing the back of the buttons
-        pygame.draw.rect(window, new_back_color, back_new_rect)
-        pygame.draw.rect(window, load_back_color, back_load_rect)
-
-        # drawing the buttons
-        pygame.draw.rect(window, (50, 50, 50), new_rect)
-        pygame.draw.rect(window, (50, 50, 50), load_rect)
-
-        # drawing the text on buttons
-        window.blit(font.render(" New Game", True, (255, 255, 255)), new_rect)
-        window.blit(font.render(" Load Game", True, (255, 255, 255)), load_rect)
-
-        # game title
-        large_font = pygame.font.SysFont('arial', 150)
-        window.blit(large_font.render("World Explorer", True, (200, 200, 255)), pygame.Rect(50, 50, 195, 60))
-        pygame.draw.rect(window, (0, 0, 255), pygame.Rect(950, 100, 100, 100))
-
-        pygame.display.flip()
-
-
 def main():
+    # initializing single objects
+    fader = Fader()
+    pauser = Pauser()
+    upgrader = Upgrader()
+    worldMover = WorldMover()
+    fpsDisplay = FpsDisplay()
+    player = Player()
+    menuManager = MenuManager()
+
+    # menu loop
+    while True:
+        events = pygame.event.get()     # we need to pass events to the menu so we store
+        for event in events:
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+
+        menuManager.display(events, font)
+
+        if menuManager.load_data() != None:
+            load_game(menuManager.load_data(), player)
+            break
+        
+        # ticks at FPS, updates screen to show new drawings
+        fpsClock.tick(FPS)
+        pygame.display.update()
+
     global boss_statuses, gold, world_x, world_y
     # setting theme colors based on location, using a list where 1st two values are y-value range and 3rd is color
     background_color_palette = [
@@ -250,23 +151,10 @@ def main():
     # color values (pink) incase none was assigned.
     background_color = (255, 100, 100)
 
-    # getting save file and loading
-    save_point = main_menu()
-    load_game(save_point)
-
     # initial values
     previous_stage = 0
     damage_counter = [0, 0]
-    player.current_health = 8 if ability_statuses.health_increase else 8
-    player.max_health = player.current_health
-
-    # initializing single objects
-    fader = Fader()
-    pauser = Pauser()
-    upgrader = Upgrader()
-    worldMover = WorldMover()
-    fpsDisplay = FpsDisplay()
-
+    
     # main loop
     while True:
         for event in pygame.event.get():
@@ -282,7 +170,7 @@ def main():
                 Platform.wall_color = potential_value[5]
         window.fill(background_color)
 
-        key = pygame.key.get_pressed()  # exit through p
+        key = pygame.key.get_pressed()  # exit through escape
         # pause screen / pausing
         pauser.check_for_pause(key[K_ESCAPE])
         if pauser.paused:
