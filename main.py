@@ -14,7 +14,7 @@ from bullet import Bullet
 from platform import Platform
 from player import Player
 from fader import Fader
-from pauserManager import PauseManager
+from pauseManager import PauseManager
 from worldMover import WorldMover
 from fpsDisplay import FpsDisplay
 from menuManager import MenuManager
