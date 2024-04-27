@@ -3,6 +3,9 @@ import sys
 import random
 import level
 from pygame.locals import *
+
+# importing objects
+from abilityStatusList import AbilityStatusList
 from gameObject import GameObject
 from entity import Entity
 from enemy import Enemy
@@ -12,6 +15,7 @@ from platform import Platform
 from player import Player
 from fader import Fader
 from pauser import Pauser
+from worldMover import WorldMover
 
 SAVE_FILE = "save_data/save_data.txt"
 
@@ -34,7 +38,7 @@ small_font = pygame.font.SysFont('arial', 20)
 
 # lists of whether each boss is dead or alive.
 boss_statuses = [True, True, True, True, True, True, True, True, True, True]
-ability_statuses = [False, False, False, False, False]
+ability_statuses = AbilityStatusList()
 
 world = level.level()
 gold = 0
@@ -160,7 +164,7 @@ def ask_for_load():
 
                         s_gold = int(name[20] + name[21] + name[22] + name[23])     # name[20 - 23] used for gold
                                                                                     # 4 values
-                        save_point = (s_point, s_boss_list, s_ability_list, s_gold)
+                        save_point = (s_point, s_boss_list, AbilityStatusList(s_ability_list), s_gold)
 
                         return save_point # breaks loop
 
@@ -251,12 +255,13 @@ def main():
     # initial values
     previous_stage = 0
     damage_counter = [0, 0]
-    player.current_health = 5
+    player.current_health = 8 if ability_statuses.health_increase else 8
     player.max_health = player.current_health
 
     # initializing single objects
     fader = Fader()
     pauser = Pauser()
+    worldMover = WorldMover()
 
     # FPS display stuff
     show_FPS = False
@@ -288,38 +293,24 @@ def main():
             # showing pause text
             window.blit(font.render("Paused.", False, (255, 255, 255)), (50, 200))
 
-            # displaying pause screen
+            # displaying pause screen with its world minimap
             pauser.display(world)
+
+            # don't do anything else- we're done here
+            fpsClock.tick(FPS)
+            pygame.display.update()
             continue
         
-        # setting total health based on abilities
-        player.max_health = 5
-        if ability_statuses[3]:
-            player.max_health = 8
-        if player.current_health > player.max_health:
-            player.current_health = player.max_health
+        # setting total health player based on abilities
+        player.set_max_health()
 
         # if player alive, check if need to swap stages
         if player.current_health > 0:
-            if player.exit_status:  # only can change level if exits are open (i.e. bosses are dead)
-                if player.rect.x < 10:  # moving by x
-                    world_x -= 1
-                    player.rect.x = window_width - 30
-                if player.rect.x + 10 > window_width:
-                    player.rect.x = 10
-                    world_x += 1
-                if player.rect.y < 10:  # moving by y
-                    world_y -= 1
-                    player.rect.y = window_height - 30
-                if player.rect.y + 10 > window_height:
-                    player.rect.y = 30
-                    world_y += 1
-                    if player.y_velocity > 5:         # preventing high gravity upon level switch
-                        player.y_velocity = 5
+            worldMover.update_world_coordinates(player)
 
-        # changing everything if the player died
-        if player.current_health <= 0:
-            player.current_health = player.max_health
+        # if the player is dead, reloads
+        else:
+            player.reset_health()
             load_game(save_point)
 
         # building the stage
@@ -431,19 +422,19 @@ def main():
             if platform.type == "upgrade" and player.rect.colliderect(platform.rect):  # if the platform was an upgrade token, calls another function
                 text1 = ""; text2 = ""
                 if world_y == 2 and world_x == 1:
-                    ability_statuses[0] = True
+                    ability_statuses.double_jump = True
                     text1 = "Unlocked double jump."
                     text2 = "Press W while in the air to use."
                 if world_y == 3 and world_x == 0:
-                    ability_statuses[1] = True
+                    ability_statuses.dash = True
                     text1 = "Unlocked dash."
                     text2 = "Press space to use."
                 if world_y == 3 and world_x == 5:
-                    ability_statuses[2] = True
+                    ability_statuses.blaster = True
                     text1 = "Unlocked blaster."
                     text2 = "Press arrow keys or click the mouse to use."
                 if world_y == 8 and world_x == 0:
-                    ability_statuses[3] = True
+                    ability_statuses.health_increase = True
                     text1 = "Health has been increased."
                     text2 = "You now have more health."
 
@@ -456,9 +447,9 @@ def main():
                     fader.darken_fade()
                     if fader.at_darkest():  # shows text once fade fully present
                         window.blit(font.render(text1, False, (255, 255, 255)), (50, 200))
+                        window.blit(medium_font.render(text2, False, (255, 255, 255)), (50, 280))
                         window.blit(small_font.render("Press P to leave this menu.", False, (255, 255, 255)),
                                     (50, 400))
-                        window.blit(medium_font.render(text2, False, (255, 255, 255)), (50, 280))
 
                     key = pygame.key.get_pressed()  # exit through p
                     if key[K_p]:
@@ -470,7 +461,7 @@ def main():
         # if exits are closed, shows text and prevents movement if player tries to leave bounds
         if not player.exit_status:              
             if not player.in_bounds():
-                player.show_exit = 100
+                player.show_exit_warning()
             player.stop_escape()
 
         # bad that player save like this TODO: fix
@@ -549,8 +540,6 @@ def main():
                 color = (255, 255, 255)
             window.blit(font.render(f"FPS: {average_FPS}", True, color), pygame.Rect(window_width - 200, 0, 0, 0))
 
-        if not key[K_ESCAPE]:
-            holding_escape = False
         previous_backspace = key[K_BACKSPACE]
 
         # default screen fade: try to clear up the screen
@@ -559,15 +548,15 @@ def main():
 
         # grabs values from a ticker in player which get set to 100 upon touching something.
         # used for persistent text boxes, such as after touching a save point.
-        if player.show_save == 100:
-            damage_counter = [20, -1]
-        if player.show_save > 0:
-            player.show_save -= 1
+        if player.just_saved():
+            damage_counter = [20, -1]  # healing player by dealing negative damage
+        if player.showing_saved_text():
+            player.reduce_save_timer()
             text = medium_font.render("Your progress has been saved.", False, (255, 255, 100))
             text.set_alpha(player.show_save * 10)
             window.blit(text, (700, 566))
-        if player.show_exit > 0:
-            player.show_exit -= 1
+        if player.showing_exit_warning():
+            player.reduce_exit_warning_timer()
             text = medium_font.render("Exit is closed until the boss is defeated.", False, (255, 100, 100))
             text.set_alpha(player.show_exit * 10)
             window.blit(text, (700, 566))
