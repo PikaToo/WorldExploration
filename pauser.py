@@ -1,23 +1,20 @@
 from gameObject import GameObject
 from minimap import Minimap
-from pygame.locals import * # for pause key presses
-import pygame               # for drawing
+import pygame
 
 class Pauser(GameObject):
     def __init__(self):
         self.holding_escape = True
         self.paused = False
     
-    def check_for_pause(self):
-        key = pygame.key.get_pressed()
-
+    def check_for_pause(self, pressing_escape):
         # toggles pause if pressing but not holding
-        if key[K_ESCAPE] and not self.holding_escape:
+        if pressing_escape and not self.holding_escape:
             self.paused = not self.paused
 
         # giving information on this frame to next frame
         #   to see if holding
-        self.holding_escape = key[K_ESCAPE]
+        self.holding_escape = pressing_escape
 
 
     def display(self, world, font):
