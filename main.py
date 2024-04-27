@@ -15,7 +15,6 @@ from platform import Platform
 from player import Player
 from fader import Fader
 from pauser import Pauser
-from upgrader import Upgrader
 from worldMover import WorldMover
 from fpsDisplay import FpsDisplay
 from menuManager import MenuManager
@@ -118,7 +117,6 @@ def main():
     # initializing single objects
     fader = Fader()
     pauser = Pauser()
-    upgrader = Upgrader()
     worldMover = WorldMover()
     fpsDisplay = FpsDisplay()
     player = Player()
@@ -172,26 +170,14 @@ def main():
 
         key = pygame.key.get_pressed()  # exit through escape
         # pause screen / pausing
-        pauser.check_for_pause(key[K_ESCAPE], upgrader.upgrading)
-        if pauser.paused:
+        pauser.check_for_pause(key[K_ESCAPE], Platform.platforms, player)
+        if pauser.manually_paused or pauser.upgrader_paused:
             # fading in
             fader.darken_fade()
             fader.display()
 
             # displaying pause screen with its world minimap
-            pauser.display(world, font)
-
-            # don't do anything else- we're done here (paused)
-            fpsClock.tick(FPS)
-            pygame.display.update()
-            continue
-        
-        # player upgrade pausing
-        upgrader.check_for_pause(key[K_ESCAPE], Platform.platforms, player)
-        if upgrader.upgrading:
-            fader.darken_fade()
-            fader.display()
-            upgrader.display(font, medium_font, small_font)
+            pauser.display(world, font, medium_font, small_font)
 
             # don't do anything else- we're done here (paused)
             fpsClock.tick(FPS)
