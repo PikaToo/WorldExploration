@@ -14,6 +14,7 @@ from bullet import Bullet
 from platformManager import Platform
 from player import Player
 from fader import Fader
+from healthManager import HealthManager
 from pauseManager import PauseManager
 from worldManager import WorldManager
 from fpsDisplay import FpsDisplay
@@ -111,7 +112,8 @@ def load_game(save_data, player):
 def main():
     # initializing single objects
     fader = Fader()
-    pauser = PauseManager()
+    pauseManager = PauseManager()
+    healthManager = HealthManager()
     worldManager = WorldManager()
     fpsDisplay = FpsDisplay()
     player = Player()
@@ -146,7 +148,6 @@ def main():
     background_color = (255, 100, 100)
 
     # initial values
-    damage_counter = [0, 0]
     worldManager.create_level(world)
     
     # main loop
@@ -166,14 +167,14 @@ def main():
 
         # pause screen / pausing
         key = pygame.key.get_pressed()  # exit through escape
-        pauser.check_for_pause(key[K_ESCAPE], Platform.platforms, player)
-        if pauser.manually_paused or pauser.upgrader_paused:
+        pauseManager.check_for_pause(key[K_ESCAPE], Platform.platforms, player)
+        if pauseManager.manually_paused or pauseManager.upgrader_paused:
             # fading in
             fader.darken_fade()
             fader.display()
 
             # displaying pause screen
-            pauser.display(world, font, medium_font, small_font)
+            pauseManager.display(world, font, medium_font, small_font)
 
             # don't do anything else- we're done here (continue causes the pause effect)
             fpsClock.tick(FPS)
@@ -181,13 +182,13 @@ def main():
             continue
     
         # if player alive, check if need to swap stages
-        if player.current_health > 0:
+        if healthManager.current_health > 0:
             worldManager.update_world_coordinates(player)
 
         # if the player is dead, reloads
         else:
-            player.reset_health()
-            load_game(save_point)
+            healthManager.reset_health()
+            load_game(save_point, player)
 
         # building the stage
         if worldManager.world_changed:
@@ -216,9 +217,8 @@ def main():
                 enemy.move(player.rect, Platform.platforms)  # moves enemies, gives them player location
 
                 # player-enemy collision
-                if player.rect.colliderect(enemy.rect) and player.has_no_i_frames():
-                    damage_counter = [20, enemy.damage]
-                    player.give_i_frames()
+                if player.rect.colliderect(enemy.rect):
+                    healthManager.take_damage(enemy.damage)
 
                 # drawing
                 enemy.draw_health_bar()
@@ -241,9 +241,8 @@ def main():
 
             # if bullet shot by an enemy, checks collision against player
             if bullet.owner == "enemy":
-                if bullet.rect.colliderect(player.rect) and player.has_no_i_frames():
-                    damage_counter = [20, bullet.damage]
-                    player.give_i_frames()
+                if bullet.rect.colliderect(player.rect):
+                    healthManager.take_damage(bullet.damage)
                     will_die = True
 
             if will_die:
@@ -252,7 +251,8 @@ def main():
         # movement
         for explosion in Explosion.explosions:
             explosion.move()
-        player.update()  
+        player.update()
+        healthManager.update()
 
         # if exits are closed, shows text and prevents movement if player tries to leave bounds
         if not player.exit_status:
@@ -276,48 +276,12 @@ def main():
         for enemy in Enemy.enemies:
             enemy.draw()
         player.draw()
-
-        # rumble and health decrease
-        bar_rumble = 0
-        if damage_counter[1] > 0:                              # ticking counter down, taking damage
-            damage_counter[0] -= 1
-            bar_rumble = random.randint(-3, 3)
-            if damage_counter[0] == 0:                             # removes health after rumble
-                player.current_health -= damage_counter[1]
-                damage_counter[1] = 0
-        # rumble and health increase
-        if damage_counter[1] < 0:                              # ticking counter up, restoring health
-            damage_counter[0] -= 1
-            bar_rumble = random.randint(-2, 2)
-            if damage_counter[0] == 0:                            # restores health after rumble
-                player.current_health = player.max_health
-                damage_counter[1] = 0
-
-        # showing UI
-        i = 0
-        while i < player.max_health:                                         # health circles
-            i += 1
-            individual_rumble = bar_rumble * random.randint(-1, 1)      # rumble, off-sets all values
-            x_pos = i*25 + 40
-            y_pos = 585
-            x_pos_rumble = x_pos + individual_rumble
-            y_pos_rumble = y_pos + individual_rumble
-            pygame.draw.circle(window, (100, 50, 50), (x_pos, y_pos), 12)       # background circle
-
-            hearts_losing_life = player.current_health - damage_counter[1] + 1
-            
-            # inner circle varies.
-            if i <= player.current_health:                                             # only draws if have equal or more health
-                if damage_counter[0] > 0 and i >= hearts_losing_life:   # shrinking animation if taking damage
-                    pygame.draw.circle(window, (255, 50, 50), (x_pos_rumble, y_pos_rumble), 0.5 * damage_counter[0])
-                else:
-                    pygame.draw.circle(window, (255, 80, 80), (x_pos_rumble, y_pos_rumble), 10)
-            if i > player.current_health and damage_counter[1] < 0:                       # growing animation if restoring health
-                pygame.draw.circle(window, (255, 50, 50), (x_pos, y_pos), 10 - (0.5 * damage_counter[0]))
-
+        healthManager.display_overlay()
+        
         level = (chr(65 + GameObject.world_x) + str('%02d' % (GameObject.world_y + 1)))           # getting level value from numbers
-        window.blit(small_font.render(level, False, (255, 255, 255)), (1171, 575))          # levels
-        window.blit(small_font.render((str(gold)+"g"), False, (255, 255, 50)), (5, 575))    # gold
+        GameObject.window.blit(small_font.render(level, False, (255, 255, 255)), (1171, 575))          # levels
+        GameObject.window.blit(small_font.render((str(gold)+"g"), False, (255, 255, 50)), (5, 575))    # gold
+
 
         # DEBUG: shows  FPS if backspace is pressed
         fpsDisplay.display(fpsClock, font)
@@ -329,7 +293,7 @@ def main():
         # grabs values from a ticker in player which get set to 100 upon touching something.
         # used for persistent text boxes, such as after touching a save point.
         if player.just_saved():
-            damage_counter = [20, -1]  # healing player by dealing negative damage
+            healthManager.reset_health()
         if player.showing_saved_text():
             player.reduce_save_timer()
             text = medium_font.render("Your progress has been saved.", False, (255, 255, 100))
