@@ -1,18 +1,15 @@
 import pygame
 from pygame.locals import *
-from entity import GameObject       # players are entities
+from entity import Entity       # players are entities
 from bullet import Bullet       # player can make bullets
+from gameObject import GameObject
 from platformManager import Platform   # player needs to know platform locations
 
-class Player(GameObject):
+class Player(Entity):
     def __init__(self):
-        # initial position
-        self.rect = pygame.Rect(100, 550, 20, 20)
-
-        # velocities
-        self.x_velocity = 0
-        self.y_velocity = 0
-
+        # initial rect, color, and velocities
+        super().__init__(100, 550, 20, (0, 0, 255), 0, 0)
+        
         # initial player health
         self.max_health = 8 if GameObject.ability_statuses.health_increase else 5 
         self.current_health = self.max_health
@@ -235,15 +232,15 @@ class Player(GameObject):
 
     # sets the exit status counter back up to max
     def show_exit_warning(self):
-        self.exit_status = 100
+        self.show_exit = 100
 
     # decrements the exit status counter by 1
     def reduce_exit_warning_timer(self):
-        self.exit_status -= 1
+        self.show_exit -= 1
     
     # tells if the exit timer has finished counting
     def showing_exit_warning(self):
-        return (self.exit_status > 0)
+        return (self.show_exit > 0)
 
 
     # sets the save status counter back up to max

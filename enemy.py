@@ -29,7 +29,7 @@ class Enemy(Entity):
         if self.ai == "Harmer":
             self.gold = 25
         
-        Entity.enemies.append(self)
+        Enemy.enemies.append(self)
 
     def move(self, player_rect, platform_list):
         # enemy movement based on AI
@@ -228,4 +228,4 @@ class Enemy(Entity):
 
 
     def delete(self):
-        Entity.enemies.remove(self)
+        Enemy.enemies.remove(self)
