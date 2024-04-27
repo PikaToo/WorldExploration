@@ -10,18 +10,11 @@ class Player(Entity):
         # initial rect, color, and velocities
         super().__init__(100, 550, 20, (0, 0, 255), 0, 0)
         
-        # initial player health
-        self.max_health = 8 if GameObject.ability_statuses.health_increase else 5 
-        self.current_health = self.max_health
-
         # player abilities
         self.unlocked_double_jump = False
         self.unlocked_dash = False
         self.unlocked_bullets = False
         self.unlocked_higher_health = False
-
-        # invincibility frames
-        self.i_frames = 0
         
         # seeing if double jump has been used and how long the player has been off the ground for
         self.double_jump = False
@@ -53,15 +46,7 @@ class Player(Entity):
     # updates player by moving and applying anything required
     def update(self):
         key = pygame.key.get_pressed()
-
-        # updates i_frames
-        if self.i_frames > 0:
-            self.i_frames -= 1
-
-        # ensures player health is correct and caps current to not be greater than max
-        self.max_health = 8 if GameObject.ability_statuses.health_increase else 5
-        self.current_health = min(self.current_health, self.max_health)
-
+        
         # x-movement from pressing movement keys
         # first sets values to 0 in case no button is pressed
         x_movement = 0
@@ -211,24 +196,11 @@ class Player(Entity):
         if save_point == 2:
             self.rect.x = 663
             self.rect.y = 280
-    
-
-    # gives 2 seconds of invincibility
-    def give_i_frames(self):
-        self.i_frames = 120
-    
-    # checks if has invincibility
-    def has_no_i_frames(self):
-        return self.i_frames <= 0
-
+        
 
     # caps velocity upwards at 5; used when transitioning to higher levels
     def cap_upward_speed(self):
         self.y_velocity = max(self.y_velocity, 5)
-    
-    def reset_health(self):
-        self.current_health = self.max_health
-
 
     # sets the exit status counter back up to max
     def show_exit_warning(self):
@@ -258,10 +230,3 @@ class Player(Entity):
     # tells if the player has just saved
     def just_saved(self):
         return (self.show_save == 100)
-
-
-    def draw(self):
-        if self.i_frames > 0:  # if player has i_frames, draw a lighter blue.
-            pygame.draw.rect(GameObject.window, (100, 100, 255), self.rect)
-        elif self.i_frames != -50:
-            pygame.draw.rect(GameObject.window, (0, 0, 255), self.rect)
