@@ -37,10 +37,9 @@ world = level.level()
 # TODO:
 # fix rest of OOP
 #
-# TODO: make it so bosses actually die
 # TODO: iframe color change
 # TODO: make it so player loads to desired load code position
-# TODO: entity/platform sub-types 
+# TODO: platform sub-types 
 # TODO: bosses unique health bars
 #
 # save point(s) near tutorial area
@@ -112,10 +111,7 @@ def main():
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
-        
-        # setting background color and updating platform wall color
-        window.fill(Platform.update_color())
- 
+         
         # pause screen / pausing
         key = pygame.key.get_pressed()  # exit through escape
         pauseManager.check_for_pause(key[K_ESCAPE], Platform.platforms, player)
@@ -163,9 +159,6 @@ def main():
                 if player.rect.colliderect(enemy.rect):
                     healthManager.take_damage(enemy.damage)
 
-                # drawing
-                enemy.draw_health_bar()
-
         # all bullet stuff happens here
         for bullet in Bullet.bullets:
             will_die = False
@@ -209,6 +202,9 @@ def main():
             uiManager.enable_save_text()
             healthManager.reset_health()
         
+        # setting background color and updating platform wall color
+        window.fill(Platform.update_color())
+        
         # drawing entities in order of increasing visbility priority
         for platform in Platform.platforms:
             platform.draw()
@@ -218,6 +214,7 @@ def main():
             bullet.draw()
         for enemy in Enemy.enemies:
             enemy.draw()
+            enemy.draw_health_bar()
         player.draw()
 
         # drawing ui elements
