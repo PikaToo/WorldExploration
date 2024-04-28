@@ -1,11 +1,15 @@
 import pygame
 from gameObject import GameObject
 
+background_color_palette = [
+    [0, 5,  (0, 0, 0),     0, 4,   (100, 100, 100)],    # tutorial colors
+    [6, 8,  (0, 10, 0),    5, 9,   (50, 60, 50)   ],    # grass colors
+    [9, 12, (0, 0, 10),    10, 12, (50, 50, 60)   ]     # ice colors
+]
+
 # platform: all walls and other hard surfaces
 class Platform(GameObject):
     wall_color = (255, 100, 100)
-    ability_statuses = [False, False, False, False, False]
-
     platforms = []
 
     def __init__(self, x_pos, y_pos, size, platform_type):
@@ -13,7 +17,19 @@ class Platform(GameObject):
         self.type = platform_type
         Platform.platforms.append(self)
 
-    # draws platforms b:ased on current stage's wall color
+    # sets wall color based on current location and returns background color 
+    @staticmethod
+    def update_color():
+        for value in background_color_palette:
+            # checking if in y range
+            if value[0] <= GameObject.world_y <= value[1]:     # first half is background color
+                background_color = value[2]
+            if value[3] <= GameObject.world_y <= value[4]:     # second half is wall color
+                Platform.wall_color = value[5]
+        
+        return background_color
+
+    # draws self based on current stage's wall color
     def draw(self):
         if self.type == "platform":               # these 2 platforms are just drawn in respective colors
             pygame.draw.rect(GameObject.window, Platform.wall_color, self.rect)

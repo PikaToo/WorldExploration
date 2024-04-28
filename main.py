@@ -102,15 +102,6 @@ def main():
         # ticks at FPS, updates screen to show new drawings
         fpsClock.tick(FPS)
         pygame.display.update()
-
-    global boss_statuses, gold
-    # setting theme colors based on location, using a list where 1st two values are y-value range and 3rd is color
-    background_color_palette = [
-        [0, 5,  (0, 0, 0),     0, 4,   (100, 100, 100)],    # tutorial colors
-        [6, 8,  (0, 10, 0),    5, 9,   (50, 60, 50)],       # grass colors
-        [9, 12, (0, 0, 10),    10, 12, (50, 50, 60)]]       # ice colors
-    # color values (pink) incase none was assigned.
-    background_color = (255, 100, 100)
  
     # initial values
     worldManager.create_level(world)
@@ -122,13 +113,8 @@ def main():
                 pygame.quit()
                 sys.exit()
         
-        # iterating through the color list defined earlier.
-        for potential_value in background_color_palette:
-            if potential_value[0] <= GameObject.world_y <= potential_value[1]:     # first half is background color
-                background_color = potential_value[2]
-            if potential_value[3] <= GameObject.world_y <= potential_value[4]:     # second half is wall color
-                Platform.wall_color = potential_value[5]
-        window.fill(background_color)
+        # setting background color and updating platform wall color
+        window.fill(Platform.update_color())
  
         # pause screen / pausing
         key = pygame.key.get_pressed()  # exit through escape
