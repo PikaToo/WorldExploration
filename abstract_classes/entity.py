@@ -1,6 +1,6 @@
 import pygame
 from platforms import Platform   # entities need to know platform locations
-from gameObject import GameObject
+from abstract_classes.gameObject import GameObject
 
 class Entity(GameObject):
     def __init__(self, x_pos, y_pos, size, color, x_velocity, y_velocity):

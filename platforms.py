@@ -1,5 +1,5 @@
 import pygame
-from gameObject import GameObject
+from abstract_classes.gameObject import GameObject
 
 background_color_palette = [
     [0, 5,  (0, 0, 0),     0, 4,   (100, 100, 100)],    # tutorial colors

@@ -1,4 +1,4 @@
-from entity import Entity
+from abstract_classes.entity import Entity
 from random import randint
 
 # explosion: the enemy death's gold-particle explosion 

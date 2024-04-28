@@ -1,5 +1,5 @@
 import pygame
-from gameObject import GameObject
+from abstract_classes.gameObject import GameObject
 
 # fader: used to handle fade-ins and fade-outs
 class FadeManager(GameObject):

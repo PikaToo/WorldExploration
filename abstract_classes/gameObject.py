@@ -1,5 +1,5 @@
-from abilityStatusList import AbilityStatusList
-from bossStatusList import BossStatusList
+from data_containers.abilityStatusList import AbilityStatusList
+from data_containers.bossStatusList import BossStatusList
 
 # game object: an object that is used by the game 
 #   gives the object access to the world state, the window, etc. 

@@ -4,8 +4,8 @@ import level
 from pygame.locals import *
 
 # importing objects
-from gameObject import GameObject
-from enemy import Enemy
+from abstract_classes.gameObject import GameObject
+from abstract_classes.enemy import Enemy
 from explosion import Explosion
 from bullet import Bullet
 from platforms import Platform

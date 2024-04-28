@@ -1,5 +1,5 @@
-from enemy import Enemy
-from gameObject import GameObject
+from abstract_classes.enemy import Enemy
+from abstract_classes.gameObject import GameObject
 from bullet import Bullet
 from random import randint
 

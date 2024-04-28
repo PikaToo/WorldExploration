@@ -1,4 +1,4 @@
-from gameObject import GameObject
+from abstract_classes.gameObject import GameObject
 import pygame
 from pygame.locals import * # for FPS key presses (backspace)
 

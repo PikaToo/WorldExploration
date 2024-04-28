@@ -1,5 +1,5 @@
 import pygame
-from entity import Entity       # enemies are entities 
+from abstract_classes.entity import Entity       # enemies are entities 
 
 class Enemy(Entity):
 

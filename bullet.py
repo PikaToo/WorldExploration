@@ -1,4 +1,4 @@
-from entity import Entity
+from abstract_classes.entity import Entity
 
 # bullet: a bullet shot by either a player or an enemy
 class Bullet(Entity):

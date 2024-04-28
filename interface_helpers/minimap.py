@@ -1,5 +1,5 @@
 import pygame
-from gameObject import GameObject
+from abstract_classes.gameObject import GameObject
 
 class Minimap(GameObject):
     def __init__(self, world, boss_statuses):

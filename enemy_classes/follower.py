@@ -1,4 +1,4 @@
-from enemy import Enemy
+from abstract_classes.enemy import Enemy
 
 class Follower(Enemy):
     def __init__(self, x_pos, y_pos, player, platform_list):

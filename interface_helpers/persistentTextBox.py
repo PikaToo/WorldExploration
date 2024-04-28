@@ -1,5 +1,5 @@
 import pygame
-from gameObject import GameObject
+from abstract_classes.gameObject import GameObject
 
 # persistent text box : object that displays text over its time period 
 #   when triggered

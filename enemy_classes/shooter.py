@@ -1,4 +1,4 @@
-from enemy import Enemy
+from abstract_classes.enemy import Enemy
 from bullet import Bullet
 
 class Shooter(Enemy):

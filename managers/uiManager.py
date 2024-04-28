@@ -1,6 +1,6 @@
-from gameObject import GameObject
-from persistentTextBox import PersistentTextBox
-from fpsDisplay import FpsDisplay
+from abstract_classes.gameObject import GameObject
+from interface_helpers.persistentTextBox import PersistentTextBox
+from interface_helpers.fpsDisplay import FpsDisplay
 
 import pygame
 pygame.font.init()

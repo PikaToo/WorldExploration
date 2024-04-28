@@ -1,5 +1,5 @@
 import pygame
-from gameObject import GameObject
+from abstract_classes.gameObject import GameObject
 from random import randint
 
 # overlay manager : handles the health and level display UI elements

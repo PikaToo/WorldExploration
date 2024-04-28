@@ -1,5 +1,5 @@
-from gameObject import GameObject
-from healthOverlay import HealthOverlay
+from abstract_classes.gameObject import GameObject
+from interface_helpers.healthOverlay import HealthOverlay
 
 class HealthManager(GameObject):
     def __init__(self):

@@ -1,6 +1,6 @@
-from gameObject import GameObject
+from abstract_classes.gameObject import GameObject
 from platforms import Platform
-from enemy import Enemy
+from abstract_classes.enemy import Enemy
 from bullet import Bullet
 from explosion import Explosion
 

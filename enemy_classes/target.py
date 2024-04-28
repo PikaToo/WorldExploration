@@ -1,5 +1,5 @@
-from enemy import Enemy
-from gameObject import GameObject
+from abstract_classes.enemy import Enemy
+from abstract_classes.gameObject import GameObject
 
 class Target(Enemy):
     def __init__(self, x_pos, y_pos, player, platform_list):

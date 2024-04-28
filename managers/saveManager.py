@@ -1,6 +1,6 @@
-from gameObject import GameObject
-from abilityStatusList import AbilityStatusList
-from bossStatusList import BossStatusList
+from abstract_classes.gameObject import GameObject
+from data_containers.abilityStatusList import AbilityStatusList
+from data_containers.bossStatusList import BossStatusList
 
 # save manager : handles all saving and loading 
 class SaveManager(GameObject):

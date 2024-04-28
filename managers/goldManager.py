@@ -1,4 +1,4 @@
-from gameObject import GameObject
+from abstract_classes.gameObject import GameObject
 
 class GoldManager(GameObject):
     def __init__(self):

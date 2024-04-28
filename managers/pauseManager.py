@@ -1,5 +1,5 @@
-from gameObject import GameObject
-from minimap import Minimap
+from abstract_classes.gameObject import GameObject
+from interface_helpers.minimap import Minimap
 import pygame
 
 pygame.font.init()
