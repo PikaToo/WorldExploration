@@ -6,19 +6,18 @@ from pygame.locals import *
 # importing objects
 from gameObject import GameObject
 from enemy import Enemy
-from entity import Entity
 from explosion import Explosion
 from bullet import Bullet
 from platforms import Platform
 from player import Player
-from fadeManager import FadeManager
-from healthManager import HealthManager
-from pauseManager import PauseManager
-from worldManager import WorldManager
-from menuManager import MenuManager
-from goldManager import GoldManager
-from uiManager import UiManager
-from saveManager import SaveManager
+from managers.fadeManager import FadeManager
+from managers.healthManager import HealthManager
+from managers.pauseManager import PauseManager
+from managers.worldManager import WorldManager
+from managers.menuManager import MenuManager
+from managers.goldManager import GoldManager
+from managers.uiManager import UiManager
+from managers.saveManager import SaveManager
 
 # SAVE_FILE = "save_data/save_data.txt"
 
@@ -41,6 +40,7 @@ world = level.level()
 # TODO: make it so bosses actually die
 # TODO: iframe color change
 # TODO: make it so player loads to desired load code position
+# TODO: entity/platform sub-types 
 #
 # save point(s) near tutorial area
 #
