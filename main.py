@@ -12,7 +12,7 @@ from explosion import Explosion
 from bullet import Bullet
 from platformManager import Platform
 from player import Player
-from fader import Fader
+from fadeManager import FadeManager
 from healthManager import HealthManager
 from pauseManager import PauseManager
 from worldManager import WorldManager
@@ -114,7 +114,7 @@ def load_game(save_data, player):
 
 def main():
     # initializing single objects
-    fader = Fader()
+    fadeManager = FadeManager()
     pauseManager = PauseManager()
     healthManager = HealthManager()
     worldManager = WorldManager()
@@ -181,8 +181,8 @@ def main():
         if pauseManager.manually_paused or pauseManager.upgrader_paused:
             
             # fading in
-            fader.darken_fade()
-            fader.display()
+            fadeManager.darken_fade()
+            fadeManager.display()
 
             # displaying pause screen
             pauseManager.display(world, font, medium_font, small_font)
@@ -205,7 +205,7 @@ def main():
         if worldManager.world_changed:
 
             # fade to black
-            fader.set_darkest_fade()
+            fadeManager.set_darkest_fade()
             
             # first delete all entities in current stage, then make new stage
             worldManager.empty_level()
@@ -303,8 +303,8 @@ def main():
         fpsDisplay.display(fpsClock, font)
 
         # default screen fade: try to clear up the screen
-        fader.lighten_fade()
-        fader.display()
+        fadeManager.lighten_fade()
+        fadeManager.display()
  
         # every frame, update static variables (temp)
         GameObject.set_ability_statuses(ability_statuses)

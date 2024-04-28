@@ -2,7 +2,7 @@ import pygame
 from gameObject import GameObject
 
 # fader: used to handle fade-ins and fade-outs
-class Fader(GameObject):
+class FadeManager(GameObject):
     def __init__(self):
         self.fade_screen = pygame.Surface((1200, 600))
         self.fade_screen.fill((0, 0, 0))
