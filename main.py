@@ -4,8 +4,6 @@ import level
 from pygame.locals import *
 
 # importing objects
-from abilityStatusList import AbilityStatusList
-from bossStatusList import BossStatusList
 from gameObject import GameObject
 from enemy import Enemy
 from explosion import Explosion
@@ -33,12 +31,6 @@ window = pygame.display.set_mode((window_width, window_height))
 pygame.display.set_caption('World Exploration')
 icon = pygame.Surface((20, 20))
 pygame.display.set_icon(icon)
-
-# initializing font for later use
-pygame.font.init()
-font = pygame.font.SysFont('arial', 40)
-medium_font = pygame.font.SysFont('arial', 30)
-small_font = pygame.font.SysFont('arial', 20)
 
 world = level.level()
 
@@ -86,11 +78,11 @@ def main():
     pauseManager = PauseManager()
     healthManager = HealthManager()
     worldManager = WorldManager()
-    player = Player()
     menuManager = MenuManager()
     goldManager = GoldManager()
     saveManager = SaveManager()
     uiManager = UiManager(healthManager, goldManager)
+    player = Player()
 
     # menu loop
     while True:
@@ -100,7 +92,7 @@ def main():
                 pygame.quit()
                 sys.exit()
 
-        menuManager.display(events, font)
+        menuManager.display(events)
 
         if menuManager.load_code() != None:
             saveManager.load_from_code(menuManager.load_code(), player) 
@@ -147,7 +139,7 @@ def main():
             fadeManager.display()
 
             # displaying pause screen
-            pauseManager.display(world, font, medium_font, small_font)
+            pauseManager.display(world)
 
             # don't do anything else- we're done here (continue causes the pause effect)
             fpsClock.tick(FPS)

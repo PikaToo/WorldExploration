@@ -2,6 +2,11 @@ from gameObject import GameObject
 from minimap import Minimap
 import pygame
 
+pygame.font.init()
+font = pygame.font.SysFont('arial', 40)
+medium_font = pygame.font.SysFont('arial', 30)
+small_font = pygame.font.SysFont('arial', 20)
+
 class PauseManager(GameObject):
     def __init__(self):
         self.holding_escape = True

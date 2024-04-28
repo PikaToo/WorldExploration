@@ -1,8 +1,9 @@
 from gameObject import GameObject
 import pygame
 from pygame.locals import *
-from abilityStatusList import AbilityStatusList
-from bossStatusList import BossStatusList
+
+pygame.font.init()
+font = pygame.font.SysFont('arial', 40)
 
 class MenuManager():
     def __init__(self):
@@ -88,7 +89,7 @@ class LoadMenu(GameObject):
         self.message = "Enter your load code."
 
     # function that runs when asked to input a load: used after main menu. 
-    def display(self, events, font):       
+    def display(self, events):       
         
         # text entry is best handled this way instead of get_pressed() as per Pygame documentation
         for evt in events:  
