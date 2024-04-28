@@ -15,6 +15,3 @@ class GoldManager(GameObject):
 
     def set_gold(self):
         GameObject.gold = self.gold
-
-    def display_overlay(self, font):
-        GameObject.window.blit(font.render((str(self.gold)+"g"), False, (255, 255, 50)), (5, 575))

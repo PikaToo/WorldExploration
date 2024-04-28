@@ -6,7 +6,6 @@ from pygame.locals import *
 # importing objects
 from abilityStatusList import AbilityStatusList
 from bossStatusList import BossStatusList
-from persistentTextBox import PersistentTextBox
 from gameObject import GameObject
 from enemy import Enemy
 from explosion import Explosion
@@ -20,8 +19,9 @@ from worldManager import WorldManager
 from fpsDisplay import FpsDisplay
 from menuManager import MenuManager
 from goldManager import GoldManager
+from uiManager import UiManager
 
-SAVE_FILE = "save_data/save_data.txt"
+# SAVE_FILE = "save_data/save_data.txt"
 
 # Game set up
 pygame.init()
@@ -54,6 +54,7 @@ save_point = (0, boss_statuses, ability_statuses, 0)   # point, bosses, abilitie
 #
 # TODO: move parsing text from menuManager to saver  
 # TODO: make it so bosses actually die
+# TODO: iframe color change
 #
 # save point(s) near tutorial area
 #
@@ -127,9 +128,7 @@ def main():
     player = Player()
     menuManager = MenuManager()
     goldManager = GoldManager()
-
-    save_text = PersistentTextBox("Your progress has been saved.", medium_font, (255, 255, 100))
-    exit_text = PersistentTextBox("Exit is closed until the boss is defeated.", medium_font, (255, 100, 100)) 
+    uiManager = UiManager(healthManager, goldManager)
 
     # menu loop
     while True:
@@ -224,8 +223,8 @@ def main():
                 goldManager.gain_gold(enemy.gold)
                 Explosion(enemy.rect.x + (enemy.rect.width / 2), enemy.rect.y + (enemy.rect.height / 2), enemy.gold + 1)
                 if enemy.boss != -1:
-                    pass
                     # TODO: make it so the boss is removed from list
+                    pass
                 enemy.delete()
 
             else:                               # if death isn't true, does everything else
@@ -275,14 +274,14 @@ def main():
         # if exits are closed, shows text and prevents movement if player tries to leave bounds
         if not player.exit_status:
             if not player.in_bounds():
-                exit_text.enable()
+                uiManager.enable_exit_text()
             player.stop_escape()
 
         # bad that player save like this TODO: fix
         if player.save != 0:
             save_game(player.save)
             player.save = 0
-            save_text.enable()
+            uiManager.enable_save_text()
             healthManager.reset_health()
         
         # drawing entities
@@ -295,14 +294,10 @@ def main():
         for enemy in Enemy.enemies:
             enemy.draw()
         player.draw()
-        healthManager.display_overlay()
-        save_text.display()
-        exit_text.display()
-        
-        level = (chr(65 + GameObject.world_x) + str('%02d' % (GameObject.world_y + 1)))           # getting level value from numbers
-        GameObject.window.blit(small_font.render(level, False, (255, 255, 255)), (1171, 575))          # levels
-        goldManager.display_overlay(small_font)
 
+        # drawing ui elements
+        uiManager.display()
+        
         # DEBUG: shows  FPS if backspace is pressed
         fpsDisplay.display(fpsClock, font)
 

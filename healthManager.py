@@ -40,6 +40,3 @@ class HealthManager(GameObject):
 
     def set_player_color(self):
         pass
-
-    def display_overlay(self):
-        self.healthOverlay.display()
