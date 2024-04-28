@@ -53,9 +53,9 @@ class WorldManager(GameObject):
                 if value == "L":
                     Platform(wall_x + 5, wall_y + 5, 15, "load")
                 # Enemy(x_pos, y_pos, color, size, counter, enemy_AI, enemy_health, boss, other, damage)
-                if value == "0" and GameObject.boss_statuses[0]:
+                if value == "0" and GameObject.boss_statuses.target:
                     Enemy(wall_x, wall_y, (255, 0, 0), 20, -60, "Target", 8, 0, False, 1)
-                if value == "1" and GameObject.boss_statuses[1]:
+                if value == "1" and GameObject.boss_statuses.harmer:
                     Enemy(wall_x, wall_y, (100, 200, 100), 25, -60, "Harmer", 20, 1, False, 1)
                 if value == "F":
                     Enemy(wall_x, wall_y, (100, 50, 0), 20, -60, "Follower", 5, -1, False, 1)

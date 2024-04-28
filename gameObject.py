@@ -1,4 +1,5 @@
 from abilityStatusList import AbilityStatusList
+from bossStatusList import BossStatusList
 
 # game object: an object that is used by the game 
 #   gives the object access to the world state, the window, etc. 
@@ -12,7 +13,7 @@ class GameObject(object):
     world_y = 0
 
     ability_statuses = AbilityStatusList()
-    boss_statuses = []
+    boss_statuses = BossStatusList()
 
     gold = 0
 

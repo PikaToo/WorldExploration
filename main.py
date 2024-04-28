@@ -5,6 +5,7 @@ from pygame.locals import *
 
 # importing objects
 from abilityStatusList import AbilityStatusList
+from bossStatusList import BossStatusList
 from persistentTextBox import PersistentTextBox
 from gameObject import GameObject
 from enemy import Enemy
@@ -40,7 +41,7 @@ medium_font = pygame.font.SysFont('arial', 30)
 small_font = pygame.font.SysFont('arial', 20)
 
 # lists of whether each boss is dead or alive.
-boss_statuses = [True, True, True, True, True, True, True, True, True, True]
+boss_statuses = BossStatusList()
 ability_statuses = AbilityStatusList()
 
 world = level.level()
@@ -50,6 +51,9 @@ save_point = (0, boss_statuses, ability_statuses, 0)   # point, bosses, abilitie
 
 # TODO:
 # fix rest of OOP
+#
+# TODO: move parsing text from menuManager to saver  
+# TODO: make it so bosses actually die
 #
 # save point(s) near tutorial area
 #
@@ -220,13 +224,13 @@ def main():
                 goldManager.gain_gold(enemy.gold)
                 Explosion(enemy.rect.x + (enemy.rect.width / 2), enemy.rect.y + (enemy.rect.height / 2), enemy.gold + 1)
                 if enemy.boss != -1:
-                    boss_statuses[enemy.boss] = False
+                    pass
+                    # TODO: make it so the boss is removed from list
                 enemy.delete()
 
             else:                               # if death isn't true, does everything else
                 if enemy.boss != -1:
-                    if boss_statuses[enemy.boss]:   # checks to see if the boss status of the enemy is true
-                        player.exit_status = False
+                    player.exit_status = False
 
                 enemy.move(player.rect, Platform.platforms)  # moves enemies, gives them player location
 
@@ -280,7 +284,6 @@ def main():
             player.save = 0
             save_text.enable()
             healthManager.reset_health()
-        player.save_point = save_point
         
         # drawing entities
         for platform in Platform.platforms:

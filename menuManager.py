@@ -1,8 +1,8 @@
 from gameObject import GameObject
 import pygame
 from pygame.locals import *
-import sys
 from abilityStatusList import AbilityStatusList
+from bossStatusList import BossStatusList
 
 class MenuManager():
     def __init__(self):
@@ -126,7 +126,7 @@ class LoadMenu(GameObject):
                             i += 1
 
                         s_gold = int(self.code[20] + self.code[21] + self.code[22] + self.code[23])     # name[20 - 23] used for gold
-                        save_point = (s_point, s_boss_list, AbilityStatusList(s_ability_list), s_gold)
+                        save_point = (s_point, BossStatusList(s_boss_list), AbilityStatusList(s_ability_list), s_gold)
 
                         return save_point
 
