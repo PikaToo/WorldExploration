@@ -34,14 +34,20 @@ class WorldManager(GameObject):
                 GameObject.set_world_coordinates(GameObject.world_x, GameObject.world_y + 1)
                 self.world_changed = True
 
+    # empties stage then creates new one from the world given
+    def build_new_stage(self, world):
+        self.empty_stage()
+        self.create_stage(world)
+
     # delete all entities
-    def empty_level(self):
+    def empty_stage(self):
         Platform.platforms = []
         Enemy.enemies = []
         Bullet.bullets = []
         Explosion.explosions = []
 
-    def create_level(self, world):
+    # creates stage
+    def create_stage(self, world):
         stage = world[GameObject.world_y][GameObject.world_x]
         wall_x = wall_y = 0
         for row in stage:

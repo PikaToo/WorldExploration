@@ -97,14 +97,12 @@ def main():
 
         if menuManager.load_code() != None:
             saveManager.load_from_code(menuManager.load_code(), player) 
+            worldManager.create_stage(world)
             break
         
         # ticks at FPS, updates screen to show new drawings
         fpsClock.tick(FPS)
         pygame.display.update()
- 
-    # initial values
-    worldManager.create_level(world)
     
     # main loop
     while True:
@@ -141,8 +139,7 @@ def main():
         else:
             healthManager.reset_health()
             saveManager.load_data(player)
-            worldManager.empty_level()
-            worldManager.create_level(world)
+            worldManager.build_new_stage(world)
 
         # building the stage
         if worldManager.world_changed:
@@ -151,8 +148,7 @@ def main():
             fadeManager.set_darkest_fade()
             
             # first delete all entities in current stage, then make new stage
-            worldManager.empty_level()
-            worldManager.create_level(world)
+            worldManager.build_new_stage(world)
 
         # enemy stuff
         player.exit_status = True
