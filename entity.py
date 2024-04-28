@@ -19,8 +19,8 @@ class Entity(GameObject):
 
     # returns true if entity is inside world bounds
     def in_bounds(self): 
-        in_vertical_bounds = 0 < self.rect.y < GameObject.window_height + self.size 
-        in_horizontal_bounds = 0 < self.rect.x < GameObject.window_width + self.size
+        in_vertical_bounds = 0 < self.rect.y < GameObject.window_height - self.size 
+        in_horizontal_bounds = 0 < self.rect.x < GameObject.window_width - self.size
         return in_vertical_bounds and in_horizontal_bounds
 
     def draw(self):
