@@ -4,6 +4,15 @@ from enemy import Enemy
 from bullet import Bullet
 from explosion import Explosion
 
+from enemy_classes.bird import Bird
+from enemy_classes.coldBird import ColdBird
+from enemy_classes.follower import Follower
+from enemy_classes.harmer import Harmer
+from enemy_classes.iceyFollower import IceyFollower
+from enemy_classes.pewer import Pewer
+from enemy_classes.shooter import Shooter
+from enemy_classes.target import Target
+
 class WorldManager(GameObject):
     def __init__(self):
         # to process world changes (i.e., to know to build them)
@@ -35,9 +44,9 @@ class WorldManager(GameObject):
                 self.world_changed = True
 
     # empties stage then creates new one from the world given
-    def build_new_stage(self, world):
+    def build_new_stage(self, player, world):
         self.empty_stage()
-        self.create_stage(world)
+        self.create_stage(player, world)
 
     # delete all entities
     def empty_stage(self):
@@ -47,34 +56,43 @@ class WorldManager(GameObject):
         Explosion.explosions = []
 
     # creates stage
-    def create_stage(self, world):
+    def create_stage(self, player, world):
         stage = world[GameObject.world_y][GameObject.world_x]
+
+        # first adding all platforms        
         wall_x = wall_y = 0
         for row in stage:
             for value in row:
                 if value == "W":
                     Platform(wall_x, wall_y, 30, "platform")
-                if value == "U":
+                elif value == "U":
                     Platform(wall_x + 5, wall_y + 5, 15, "upgrade")
-                if value == "L":
+                elif value == "L":
                     Platform(wall_x + 5, wall_y + 5, 15, "load")
-                # Enemy(x_pos, y_pos, color, size, counter, enemy_AI, enemy_health, boss, other, damage)
+                wall_x += 30
+            wall_y += 30
+            wall_x = 0
+
+        # then adding all enemies 
+        wall_x = wall_y = 0
+        for row in stage:
+            for value in row:
                 if value == "0" and GameObject.boss_statuses.target:
-                    Enemy(wall_x, wall_y, (255, 0, 0), 20, -60, "Target", 8, 0, False, 1)
+                    Target(wall_x, wall_y, player, Platform.platforms)
                 if value == "1" and GameObject.boss_statuses.harmer:
-                    Enemy(wall_x, wall_y, (100, 200, 100), 25, -60, "Harmer", 20, 1, False, 1)
+                    Harmer(wall_x, wall_y, player, Platform.platforms)
                 if value == "F":
-                    Enemy(wall_x, wall_y, (100, 50, 0), 20, -60, "Follower", 5, -1, False, 1)
+                    Follower(wall_x, wall_y, player, Platform.platforms)
                 if value == "S":
-                    Enemy(wall_x, wall_y, (100, 100, 0), 30, -60, "Shooter", 3, -1, False, 1)
+                    Shooter(wall_x, wall_y, player, Platform.platforms)
                 if value == "B":
-                    Enemy(wall_x, wall_y, (255, 200, 80), 25, -60, "Bird", 3, -1, False, 1)
+                    Bird(wall_x, wall_y, player, Platform.platforms)
                 if value == "I":
-                    Enemy(wall_x, wall_y, (200, 200, 255), 20, -60, "Icey Follower", 8, -1, False, 1)
+                    IceyFollower(wall_x, wall_y, player, Platform.platforms)
                 if value == "C":
-                    Enemy(wall_x, wall_y, (150, 150, 255), 30, -60, "Cold Bird", 6, -1, False, 1)
+                    ColdBird(wall_x, wall_y, player, Platform.platforms)
                 if value == "P":
-                    Enemy(wall_x, wall_y, (40, 40, 40), 40, -60, "Pewer (Cannon)", 15, -1, False, 2)
+                    Pewer(wall_x, wall_y, player, Platform.platforms)
                 wall_x += 30
             wall_y += 30
             wall_x = 0

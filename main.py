@@ -41,6 +41,7 @@ world = level.level()
 # TODO: iframe color change
 # TODO: make it so player loads to desired load code position
 # TODO: entity/platform sub-types 
+# TODO: bosses unique health bars
 #
 # save point(s) near tutorial area
 #
@@ -98,7 +99,7 @@ def main():
 
         if menuManager.load_code() != None:
             saveManager.load_from_code(menuManager.load_code(), player) 
-            worldManager.create_stage(world)
+            worldManager.create_stage(player, world)
             break
         
         # ticks at FPS, updates screen to show new drawings
@@ -138,35 +139,25 @@ def main():
 
         # if the player is dead, reloads
         else:
+            fadeManager.set_darkest_fade()
             healthManager.reset_health()
             saveManager.load_data(player)
-            worldManager.build_new_stage(world)
+            worldManager.build_new_stage(player, world)
 
         # building the stage
         if worldManager.world_changed:
-
-            # fade to black
             fadeManager.set_darkest_fade()
-            
-            # first delete all entities in current stage, then make new stage
-            worldManager.build_new_stage(world)
+            worldManager.build_new_stage(player, world)
 
         # enemy stuff
-        player.exit_status = True
         for enemy in Enemy.enemies:
             if enemy.current_health <= 0:                            # if death is true, does some things
                 goldManager.gain_gold(enemy.gold)
                 Explosion(enemy.rect.x + (enemy.rect.width / 2), enemy.rect.y + (enemy.rect.height / 2), enemy.gold + 1)
-                if enemy.boss != -1:
-                    # TODO: make it so the boss is removed from list
-                    pass
                 enemy.delete()
 
             else:                               # if death isn't true, does everything else
-                if enemy.boss != -1:
-                    player.exit_status = False
-
-                enemy.move(player.rect, Platform.platforms)  # moves enemies, gives them player location
+                enemy.move()                    # moves enemies, gives them player location
 
                 # player-enemy collision
                 if player.rect.colliderect(enemy.rect):
