@@ -1,6 +1,7 @@
 from abstract_classes.gameObject import GameObject
 from data_containers.abilityStatusList import AbilityStatusList
 from data_containers.bossStatusList import BossStatusList
+from platform_classes.savepoint import Savepoint
 from copy import deepcopy
 
 # save manager : handles all saving and loading 
@@ -14,11 +15,10 @@ class SaveManager(GameObject):
         self.gold = 0
         self.player_position = (100, 550)
 
-    def check_for_save(self, platforms, player):
-        for platform in platforms:
-            if platform.type == "load":
-                if player.rect.colliderect(platform.rect):
-                    return True
+    def check_for_save(self, player):
+        for savepoint in Savepoint.savepoints:
+            if player.rect.colliderect(savepoint.rect):
+                return True
         return False
 
     # overwrites old save data with new data from GameObject
@@ -43,6 +43,13 @@ class SaveManager(GameObject):
 
     # used to load
     def load_from_code(self, code, player):
+        # if new game, use the default data
+        if code == "New Game":
+            self.load_data(player)
+            return
+        
+        # else parse the data
+
         # code of 0 to 1 used to find world position
         world_position = int(code[0] + code[1])
         
