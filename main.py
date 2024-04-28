@@ -6,6 +6,7 @@ from pygame.locals import *
 # importing objects
 from gameObject import GameObject
 from enemy import Enemy
+from entity import Entity
 from explosion import Explosion
 from bullet import Bullet
 from platforms import Platform
@@ -211,27 +212,27 @@ def main():
                 uiManager.enable_exit_text()
             player.stop_escape()
 
-        # bad that player save like this
+        # saving
         if saveManager.check_for_save(Platform.platforms, player):
             saveManager.save_data(player)
             uiManager.enable_save_text()
             healthManager.reset_health()
         
-        # drawing entities
+        # drawing entities in order of increasing visbility priority
         for platform in Platform.platforms:
             platform.draw()
-        for bullet in Bullet.bullets:
-            bullet.draw()
         for explosion in Explosion.explosions:
             explosion.draw()
+        for bullet in Bullet.bullets:
+            bullet.draw()
         for enemy in Enemy.enemies:
             enemy.draw()
         player.draw()
 
         # drawing ui elements
         uiManager.display()
-        
-        # DEBUG: shows  FPS if backspace is pressed
+
+        # DEBUG: shows FPS if backspace is pressed
         uiManager.display_fps(fpsClock)
 
         # default screen fade: try to clear up the screen
