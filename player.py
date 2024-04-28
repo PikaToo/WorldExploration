@@ -71,9 +71,9 @@ class Player(Entity):
         if not self.previous_w_value:
             if key[K_w]:
                 if self.on_ground:
-                    self.y_velocity = -12
+                    self.y_velocity = -13
                 elif self.double_jump and self.double_jump_counter > 5 and GameObject.ability_statuses.double_jump:
-                    self.y_velocity = -12
+                    self.y_velocity = -13
                     self.double_jump = False
         self.previous_w_value = key[K_w]
 
