@@ -178,6 +178,11 @@ class Player(Entity):
             self.rect.y = GameObject.window_height - 20
             self.y_velocity = -8
 
+    def get_position(self):
+        return (self.rect.x, self.rect.y)
+
+    def set_position(self, position):
+        self.rect.x, self.rect.y = position
 
     def player_pos_change(self, save_point):
         if save_point == 1:

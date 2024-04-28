@@ -19,6 +19,7 @@ from worldManager import WorldManager
 from menuManager import MenuManager
 from goldManager import GoldManager
 from uiManager import UiManager
+from saveManager import SaveManager
 
 # SAVE_FILE = "save_data/save_data.txt"
 
@@ -39,19 +40,11 @@ font = pygame.font.SysFont('arial', 40)
 medium_font = pygame.font.SysFont('arial', 30)
 small_font = pygame.font.SysFont('arial', 20)
 
-# lists of whether each boss is dead or alive.
-boss_statuses = BossStatusList()
-ability_statuses = AbilityStatusList()
-
 world = level.level()
-gold = 0
-
-save_point = (0, boss_statuses, ability_statuses, 0)   # point, bosses, abilities, gold, minimap
 
 # TODO:
 # fix rest of OOP
 #
-# TODO: move parsing text from menuManager to saver  
 # TODO: make it so bosses actually die
 # TODO: iframe color change
 #
@@ -87,36 +80,6 @@ save_point = (0, boss_statuses, ability_statuses, 0)   # point, bosses, abilitie
 GameObject.set_window(window)
 GameObject.set_window_size(window_width, window_height)
 
-def save_game(point):
-    global save_point
-    save_point = (point, boss_statuses, ability_statuses, gold)
-
-def load_game(save_data, player):
-    # sets the load data and configures the world x/y and player abilities based on that.
-    global boss_statuses, ability_statuses, gold
-    if save_data[0] == 0:
-        GameObject.world_x = 0
-        GameObject.world_y = 0
-    if save_data[0] == 1:
-        GameObject.world_x = 0
-        GameObject.world_y = 8
-    if save_data[0] == 2:
-        GameObject.world_x = 2
-        GameObject.world_y = 7
-    if save_data[0] == 97:
-        GameObject.world_x = 5
-        GameObject.world_y = 3
-    if save_data[0] == 98:
-        GameObject.world_x = 0
-        GameObject.world_y = 8
-    if save_data[0] == 99:
-        GameObject.world_x = 4
-        GameObject.world_y = 11
-    boss_statuses = save_data[1]
-    ability_statuses = save_data[2]
-    gold = save_data[3]
-    player.player_pos_change(save_data[0])
-
 def main():
     # initializing single objects
     fadeManager = FadeManager()
@@ -126,6 +89,7 @@ def main():
     player = Player()
     menuManager = MenuManager()
     goldManager = GoldManager()
+    saveManager = SaveManager()
     uiManager = UiManager(healthManager, goldManager)
 
     # menu loop
@@ -138,14 +102,13 @@ def main():
 
         menuManager.display(events, font)
 
-        if menuManager.load_data() != None:
-            load_game(menuManager.load_data(), player)
+        if menuManager.load_code() != None:
+            saveManager.load_from_code(menuManager.load_code(), player) 
             break
         
         # ticks at FPS, updates screen to show new drawings
         fpsClock.tick(FPS)
         pygame.display.update()
-
 
     global boss_statuses, gold
     # setting theme colors based on location, using a list where 1st two values are y-value range and 3rd is color
@@ -155,11 +118,7 @@ def main():
         [9, 12, (0, 0, 10),    10, 12, (50, 50, 60)]]       # ice colors
     # color values (pink) incase none was assigned.
     background_color = (255, 100, 100)
-
-    # update after loading
-    GameObject.set_ability_statuses(ability_statuses)
-    GameObject.set_boss_statuses(boss_statuses)
-    
+ 
     # initial values
     worldManager.create_level(world)
     
@@ -177,7 +136,7 @@ def main():
             if potential_value[3] <= GameObject.world_y <= potential_value[4]:     # second half is wall color
                 Platform.wall_color = potential_value[5]
         window.fill(background_color)
-
+ 
         # pause screen / pausing
         key = pygame.key.get_pressed()  # exit through escape
         pauseManager.check_for_pause(key[K_ESCAPE], Platform.platforms, player)
@@ -194,7 +153,7 @@ def main():
             fpsClock.tick(FPS)
             pygame.display.update()
             continue
-    
+        
         # if player alive, check if need to swap stages
         if healthManager.current_health > 0:
             worldManager.update_world_coordinates(player)
@@ -202,7 +161,7 @@ def main():
         # if the player is dead, reloads
         else:
             healthManager.reset_health()
-            load_game(save_point, player)
+            saveManager.load_data(player)
 
         # building the stage
         if worldManager.world_changed:
@@ -277,7 +236,7 @@ def main():
 
         # bad that player save like this TODO: fix
         if player.save != 0:
-            save_game(player.save)
+            saveManager.save_data(player)
             player.save = 0
             uiManager.enable_save_text()
             healthManager.reset_health()
@@ -303,10 +262,6 @@ def main():
         fadeManager.lighten_fade()
         fadeManager.display()
  
-        # every frame, update static variables (temp)
-        GameObject.set_ability_statuses(ability_statuses)
-        GameObject.set_boss_statuses(boss_statuses)
-
         # ticks at FPS, updates screen to show new drawings
         fpsClock.tick(FPS)
         pygame.display.update()

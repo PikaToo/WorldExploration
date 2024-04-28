@@ -23,17 +23,13 @@ class MenuManager():
     
 
     # gives the load data present if there is any
-    def load_data(self):
+    def load_code(self):
         # print(self.menu_shown)
         # if showing a menu, no data
         if self.menu_shown == "Main" or self.menu_shown == "Load":
             return None
         
-        # if on new game, give default data
-        if self.menu_shown == "New Game":
-            return (0, [True, True, True, True, True, True, True, True, True, True], AbilityStatusList(), 0)
-
-        # else give load data
+        # returns either "New Game" or a load code
         return self.menu_shown
 
 class MainMenu(GameObject):
@@ -93,42 +89,30 @@ class LoadMenu(GameObject):
 
     # function that runs when asked to input a load: used after main menu. 
     def display(self, events, font):       
-        for evt in events:   # text entry is best handled this way instead of get_pressed() as per Pygame documentation
-            if evt.type == KEYDOWN:
+        
+        # text entry is best handled this way instead of get_pressed() as per Pygame documentation
+        for evt in events:  
+             if evt.type == KEYDOWN:
+                
+                # type numbers
                 if str(evt.unicode) in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"] and len(self.code) < 24:
-                    self.code = self.code + str(evt.unicode)          # types numbers
+                    self.code = self.code + str(evt.unicode)
+                
+                # backspace to remove number
                 if evt.key == K_BACKSPACE:
-                    self.code = self.code[:-1]                        # backspaces
+                    self.code = self.code[:-1]
+                
+                # return to finish typing
                 if evt.key == K_RETURN:
-                    if len(self.code) != 24:                     # code must be 20 characters to work
+                    
+                    # only sends through if code is of correct length
+                    if len(self.code) != 24:
                         self.code = ""
                         self.message = "Invalid load code."
+                    
+                    # returning load code if of correct size
                     else:
-                        # processes the save data
-                        s_point = int(self.code[0] + self.code[1])                        # name[0 -> 1] used for save point.
-                                                                                # 2 values
-                        # initial values for the loading loop
-                        s_ability_list = []
-                        s_boss_list = []
-
-                        i = 2
-                        while i <= 19:
-                            if i <= 11:
-                                if int(self.code[i]) == 1:                   # name[2 -> 11] used for bosses
-                                    s_boss_list.append(True)            # 10 values
-                                else:
-                                    s_boss_list.append(False)
-                            elif i <= 19:                               # name[12 -> 19] used for abilities
-                                if int(self.code[i]) == 1:                   # 8 values
-                                    s_ability_list.append(True)
-                                else:
-                                    s_ability_list.append(False)
-                            i += 1
-
-                        s_gold = int(self.code[20] + self.code[21] + self.code[22] + self.code[23])     # name[20 - 23] used for gold
-                        save_point = (s_point, BossStatusList(s_boss_list), AbilityStatusList(s_ability_list), s_gold)
-
-                        return save_point
+                        return self.code
 
         # formatting the load code to make it more legible
         formatted_code = ""
