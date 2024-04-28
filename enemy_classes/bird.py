@@ -36,3 +36,4 @@ class Bird(Enemy):
             if self.y_velocity < -5:
                 self.y_velocity = -5
 
+        self.counter += 1

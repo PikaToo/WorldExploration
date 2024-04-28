@@ -8,7 +8,7 @@ class ColdBird(Enemy):
         super().__init__(x_pos, y_pos, (200, 200, 255), 30, 6, 1, 2, player, platform_list)
 
     def move(self):
-        if self.counter == -1:                          # initial movement
+        if self.counter == 0:                          # initial movement
             x = randint(0, 1)
             if x == 0:
                 x = -1
@@ -50,3 +50,5 @@ class ColdBird(Enemy):
                 if self.y_velocity < 0:
                     self.rect.top = platform.rect.bottom
                     self.y_velocity = 10
+
+        self.counter += 1
