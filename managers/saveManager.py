@@ -1,6 +1,7 @@
 from abstract_classes.gameObject import GameObject
 from data_containers.abilityStatusList import AbilityStatusList
 from data_containers.bossStatusList import BossStatusList
+from copy import deepcopy
 
 # save manager : handles all saving and loading 
 class SaveManager(GameObject):
@@ -22,25 +23,23 @@ class SaveManager(GameObject):
 
     # overwrites old save data with new data from GameObject
     def save_data(self, player):
-        self.world_x = GameObject.world_x        
-        self.world_y = GameObject.world_y
-        self.boss_statuses = GameObject.boss_statuses
-        self.ability_statuses = GameObject.ability_statuses
-        self.gold = GameObject.gold
+        self.world_x = deepcopy(GameObject.world_x)        
+        self.world_y = deepcopy(GameObject.world_y)
+        self.boss_statuses = deepcopy(GameObject.boss_statuses)
+        self.ability_statuses = deepcopy(GameObject.ability_statuses)
+        self.gold = deepcopy(GameObject.gold)
         self.player_position = player.get_position()
     
     # overwrites GameObject data with previously saved data
     def load_data(self, player):
-        GameObject.world_x = self.world_x
-        GameObject.world_y = self.world_y
-        GameObject.boss_statuses = self.boss_statuses
-        GameObject.ability_statuses = self.ability_statuses
-        GameObject.gold = self.gold
+        GameObject.world_x = deepcopy(self.world_x)
+        GameObject.world_y = deepcopy(self.world_y)
+        GameObject.boss_statuses = deepcopy(self.boss_statuses)
+        GameObject.ability_statuses = deepcopy(self.ability_statuses)
+        GameObject.gold = deepcopy(self.gold)
 
         # moves player to desired location
         player.set_position(self.player_position)
-
-        #TODO: also needs to remake world
 
     # used to load
     def load_from_code(self, code, player):
