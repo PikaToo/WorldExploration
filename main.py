@@ -1,11 +1,11 @@
 import pygame
 import sys
-import random
 import level
 from pygame.locals import *
 
 # importing objects
 from abilityStatusList import AbilityStatusList
+from persistentTextBox import PersistentTextBox
 from gameObject import GameObject
 from entity import Entity
 from enemy import Enemy
@@ -118,6 +118,9 @@ def main():
     fpsDisplay = FpsDisplay()
     player = Player()
     menuManager = MenuManager()
+
+    save_text = PersistentTextBox("Your progress has been saved.", medium_font, (255, 255, 100))
+    exit_text = PersistentTextBox("Exit is cloed until the boss is defeated.", medium_font, (255, 100, 100)) 
 
     # menu loop
     while True:
@@ -248,7 +251,7 @@ def main():
             if will_die:
                 bullet.delete()
 
-        # movement
+        # movement and updating
         for explosion in Explosion.explosions:
             explosion.move()
         player.update()
@@ -257,13 +260,15 @@ def main():
         # if exits are closed, shows text and prevents movement if player tries to leave bounds
         if not player.exit_status:
             if not player.in_bounds():
-                player.show_exit_warning()
+                exit_text.enable()
             player.stop_escape()
 
         # bad that player save like this TODO: fix
         if player.save != 0:
             save_game(player.save)
             player.save = 0
+            save_text.enable()
+            healthManager.reset_health()
         player.save_point = save_point
         
         # drawing entities
@@ -277,6 +282,8 @@ def main():
             enemy.draw()
         player.draw()
         healthManager.display_overlay()
+        save_text.display()
+        exit_text.display()
         
         level = (chr(65 + GameObject.world_x) + str('%02d' % (GameObject.world_y + 1)))           # getting level value from numbers
         GameObject.window.blit(small_font.render(level, False, (255, 255, 255)), (1171, 575))          # levels
@@ -289,22 +296,7 @@ def main():
         # default screen fade: try to clear up the screen
         fader.lighten_fade()
         fader.display()
-
-        # grabs values from a ticker in player which get set to 100 upon touching something.
-        # used for persistent text boxes, such as after touching a save point.
-        if player.just_saved():
-            healthManager.reset_health()
-        if player.showing_saved_text():
-            player.reduce_save_timer()
-            text = medium_font.render("Your progress has been saved.", False, (255, 255, 100))
-            text.set_alpha(player.show_save * 10)
-            window.blit(text, (700, 566))
-        if player.showing_exit_warning():
-            player.reduce_exit_warning_timer()
-            text = medium_font.render("Exit is closed until the boss is defeated.", False, (255, 100, 100))
-            text.set_alpha(player.show_exit * 10)
-            window.blit(text, (700, 566))
-        
+ 
         # every frame, update static variables (temp)
         GameObject.set_ability_statuses(ability_statuses)
         GameObject.set_boss_statuses(boss_statuses)

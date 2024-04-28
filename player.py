@@ -27,10 +27,6 @@ class Player(Entity):
         # cooldown for bullets
         self.bullet_counter = 0
 
-        # counters for showing save + exit screen
-        self.show_save = 0
-        self.show_exit = 0
-
         # check to see if allowed to exit the room. only false when a boss is alive.
         self.exit_status = True
 
@@ -161,7 +157,6 @@ class Player(Entity):
                         self.rect.top = platform.rect.bottom
 
                 if platform.type == "load":
-                    self.show_saved_text()
                     if GameObject.world_x == 0 and GameObject.world_y == 8:
                         self.save = 1
                     if GameObject.world_x == 2 and GameObject.world_y == 7:
@@ -170,8 +165,6 @@ class Player(Entity):
 
     # called by main if the player is trying to leave the world bounds when not allowed
     def stop_escape(self):
-        if not 0 < self.rect.x < (GameObject.window_width - 20) or not 0 < self.rect.y < (GameObject.window_height - 20):
-            self.show_exit_warning()
         if self.rect.x < 0:
             self.rect.x = 0
             self.x_velocity = 8
@@ -201,32 +194,3 @@ class Player(Entity):
     # caps velocity upwards at 5; used when transitioning to higher levels
     def cap_upward_speed(self):
         self.y_velocity = max(self.y_velocity, 5)
-
-    # sets the exit status counter back up to max
-    def show_exit_warning(self):
-        self.show_exit = 100
-
-    # decrements the exit status counter by 1
-    def reduce_exit_warning_timer(self):
-        self.show_exit -= 1
-    
-    # tells if the exit timer has finished counting
-    def showing_exit_warning(self):
-        return (self.show_exit > 0)
-
-
-    # sets the save status counter back up to max
-    def show_saved_text(self):
-        self.show_save = 100
-
-    # decrements the save status counter by 1
-    def reduce_save_timer(self):
-        self.show_save -= 1
-    
-    # tells if the save timer has finished counting
-    def showing_saved_text(self):
-        return (self.show_save > 0)
-
-    # tells if the player has just saved
-    def just_saved(self):
-        return (self.show_save == 100)
