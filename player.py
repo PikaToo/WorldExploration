@@ -33,11 +33,6 @@ class Player(Entity):
         # seeing if holding jump button, used to make sure you press it instead of holding
         self.previous_w_value = False
         self.on_ground = False
-
-        # bad that saving is done like this TODO: fix
-        self.save = 0
-        self.FPS_clock = None
-        self.FPS = 60
     
     # updates player by moving and applying anything required
     def update(self):
@@ -156,13 +151,6 @@ class Player(Entity):
                     if y < 0:  # both jumps from immediately occuring back-to-back.
                         self.rect.top = platform.rect.bottom
 
-                if platform.type == "load":
-                    if GameObject.world_x == 0 and GameObject.world_y == 8:
-                        self.save = 1
-                    if GameObject.world_x == 2 and GameObject.world_y == 7:
-                        self.save = 2
-
-
     # called by main if the player is trying to leave the world bounds when not allowed
     def stop_escape(self):
         if self.rect.x < 0:
@@ -178,23 +166,13 @@ class Player(Entity):
             self.rect.y = GameObject.window_height - 20
             self.y_velocity = -8
 
+    # returns current position
     def get_position(self):
         return (self.rect.x, self.rect.y)
 
+    # sets current position by coordinate
     def set_position(self, position):
         self.rect.x, self.rect.y = position
-
-    def player_pos_change(self, save_point):
-        if save_point == 1:
-            self.rect.x = 100
-            self.rect.y = 550
-        if save_point == 1:
-            self.rect.x = 843
-            self.rect.y = 400
-        if save_point == 2:
-            self.rect.x = 663
-            self.rect.y = 280
-        
 
     # caps velocity upwards at 5; used when transitioning to higher levels
     def cap_upward_speed(self):
