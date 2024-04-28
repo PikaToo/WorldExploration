@@ -16,7 +16,6 @@ from fadeManager import FadeManager
 from healthManager import HealthManager
 from pauseManager import PauseManager
 from worldManager import WorldManager
-from fpsDisplay import FpsDisplay
 from menuManager import MenuManager
 from goldManager import GoldManager
 from uiManager import UiManager
@@ -124,7 +123,6 @@ def main():
     pauseManager = PauseManager()
     healthManager = HealthManager()
     worldManager = WorldManager()
-    fpsDisplay = FpsDisplay()
     player = Player()
     menuManager = MenuManager()
     goldManager = GoldManager()
@@ -299,7 +297,7 @@ def main():
         uiManager.display()
         
         # DEBUG: shows  FPS if backspace is pressed
-        fpsDisplay.display(fpsClock, font)
+        uiManager.display_fps(fpsClock)
 
         # default screen fade: try to clear up the screen
         fadeManager.lighten_fade()

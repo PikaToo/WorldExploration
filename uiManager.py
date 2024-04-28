@@ -1,5 +1,6 @@
 from gameObject import GameObject
 from persistentTextBox import PersistentTextBox
+from fpsDisplay import FpsDisplay
 
 import pygame
 pygame.font.init()
@@ -13,6 +14,7 @@ class UiManager(GameObject):
         #  displays what they state 
         self.healthManager = healthManager
         self.goldManager = goldManager
+        self.fpsDisplay = FpsDisplay()
 
         self.save_box = PersistentTextBox("Your progress has been saved.", medium_font, (255, 255, 100))
         self.exit_box = PersistentTextBox("Exit is closed until the boss is defeated.", medium_font, (255, 100, 100)) 
@@ -41,3 +43,7 @@ class UiManager(GameObject):
         # drawing save/exit text boxes- these handle on their own if they are meant to be shown or not
         self.save_box.display()
         self.exit_box.display()
+
+    # DEBUG: show FPS
+    def display_fps(self, fpsClock):
+        self.fpsDisplay.display(fpsClock, font)
