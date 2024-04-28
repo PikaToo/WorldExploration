@@ -1,5 +1,5 @@
 import pygame
-from platforms import Platform   # entities need to know platform locations
+from platform_classes.wall import Wall       # entities need to know wall locations
 from abstract_classes.gameObject import GameObject
 
 class Entity(GameObject):
@@ -10,10 +10,10 @@ class Entity(GameObject):
         self.color = color
         self.size = size
 
-    # checks for collision against platforms
-    def colliding_with_platforms(self):
-        for platform in Platform.platforms:
-            if self.rect.colliderect(platform.rect):
+    # checks for collision against walls
+    def colliding_with_walls(self):
+        for wall in Wall.walls:
+            if self.rect.colliderect(wall.rect):
                 return True
         return False
 

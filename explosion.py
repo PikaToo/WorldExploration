@@ -34,7 +34,7 @@ class Explosion(Entity):
         self.x_velocity *= 0.95
 
         # deleting if needed
-        if self.colliding_with_platforms():
+        if self.colliding_with_walls():
             self.delete()
 
 

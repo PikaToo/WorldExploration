@@ -1,5 +1,6 @@
 from abstract_classes.gameObject import GameObject
 from interface_helpers.minimap import Minimap
+from platform_classes.upgradepoint import Upgradepoint
 import pygame
 
 pygame.font.init()
@@ -15,15 +16,15 @@ class PauseManager(GameObject):
         self.manually_paused = False
         self.upgrader_paused = False
 
-    def check_for_pause(self, pressing_escape, platform_list, player):
+    def check_for_pause(self, pressing_escape, player):
         # first checking for manual pausing
         if pressing_escape and not self.holding_escape and not self.upgrader_paused:
             self.manually_paused = not self.manually_paused
 
         # next checking for upgrader pausing 
         # enter upgrader pause by hitting platform
-        for platform in platform_list:
-            if platform.type == "upgrade" and player.rect.colliderect(platform.rect):
+        for upgradepoint in Upgradepoint.upgradepoints:
+            if player.rect.colliderect(upgradepoint.rect):
                 self.upgrader_paused = True
         
         # exist upgrader pause by pressing escape

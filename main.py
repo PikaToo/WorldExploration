@@ -8,7 +8,7 @@ from abstract_classes.gameObject import GameObject
 from abstract_classes.enemy import Enemy
 from explosion import Explosion
 from bullet import Bullet
-from platforms import Platform
+from abstract_classes.platforms import Platform
 from player import Player
 from managers.fadeManager import FadeManager
 from managers.healthManager import HealthManager
@@ -41,6 +41,7 @@ world = level.level()
 # TODO: make it so player loads to desired load code position
 # TODO: platform sub-types 
 # TODO: bosses unique health bars
+# TODO: fix enemies being able to jump you immediately
 #
 # save point(s) near tutorial area
 #
@@ -98,6 +99,7 @@ def main():
 
         if menuManager.load_code() != None:
             saveManager.load_from_code(menuManager.load_code(), player) 
+            Platform.update_color()
             worldManager.create_stage(player, world)
             break
         
@@ -114,7 +116,7 @@ def main():
          
         # pause screen / pausing
         key = pygame.key.get_pressed()  # exit through escape
-        pauseManager.check_for_pause(key[K_ESCAPE], Platform.platforms, player)
+        pauseManager.check_for_pause(key[K_ESCAPE], player)
         if pauseManager.manually_paused or pauseManager.upgrader_paused:
             
             # fading in
@@ -165,7 +167,7 @@ def main():
             bullet.move_self()
             
             # checking collision with walls and also for off-screen to see if bullet should live
-            if (bullet.colliding_with_platforms() or not bullet.in_bounds()):
+            if (bullet.colliding_with_walls() or not bullet.in_bounds()):
                 will_die = True
 
             # if bullet shot by the player, checks collision againt enemies
@@ -197,7 +199,7 @@ def main():
             player.stop_escape()
 
         # saving
-        if saveManager.check_for_save(Platform.platforms, player):
+        if saveManager.check_for_save(player):
             saveManager.save_data(player)
             uiManager.enable_save_text()
             healthManager.reset_health()

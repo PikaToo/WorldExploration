@@ -3,7 +3,7 @@ from pygame.locals import *
 from abstract_classes.entity import Entity       # players are entities
 from bullet import Bullet       # player can make bullets
 from abstract_classes.gameObject import GameObject
-from platforms import Platform   # player needs to know platform locations
+from platform_classes.wall import Wall   # player needs to know wall locations
 
 class Player(Entity):
     def __init__(self):
@@ -130,26 +130,24 @@ class Player(Entity):
         self.on_ground = False  # assumes you are in free-fall
         self.rect.y += y  # moves you by velocity
 
-        for platform in Platform.platforms:  # platform collision detection
-            if platform.type == "platform":
-                if (self.rect.bottom == platform.rect.top) and \
-                    (self.rect.left in range (platform.rect.left - self.rect.width, platform.rect.right)):
-                    self.on_ground = True
-            if self.rect.colliderect(platform.rect):
-                if platform.type == "platform":
-                    if x > 0:
-                        self.rect.right = platform.rect.left
-                    if x < 0:
-                        self.rect.left = platform.rect.right
+        for wall in Wall.walls:  # platform collision detection
+            if (self.rect.bottom == wall.rect.top) and \
+                (self.rect.left in range (wall.rect.left - self.rect.width, wall.rect.right)):
+                self.on_ground = True
+            if self.rect.colliderect(wall.rect):
+                if x > 0:
+                    self.rect.right = wall.rect.left
+                if x < 0:
+                    self.rect.left = wall.rect.right
 
-                    if y > 0:
-                        self.rect.bottom = platform.rect.top
-                        self.on_ground = True  # if you are touching the ground, these 2 are set as true.
-                        self.double_jump = True  # allows you to jump and resets double jump ability.
-                        self.double_jump_counter = 0  # sets counter for double jump to 0, used to prevent
-                        self.y_velocity = 0
-                    if y < 0:  # both jumps from immediately occuring back-to-back.
-                        self.rect.top = platform.rect.bottom
+                if y > 0:
+                    self.rect.bottom = wall.rect.top
+                    self.on_ground = True  # if you are touching the ground, these 2 are set as true.
+                    self.double_jump = True  # allows you to jump and resets double jump ability.
+                    self.double_jump_counter = 0  # sets counter for double jump to 0, used to prevent
+                    self.y_velocity = 0
+                if y < 0:  # both jumps from immediately occuring back-to-back.
+                    self.rect.top = wall.rect.bottom
 
     # called by main if the player is trying to leave the world bounds when not allowed
     def stop_escape(self):

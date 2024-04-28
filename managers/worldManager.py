@@ -1,8 +1,12 @@
 from abstract_classes.gameObject import GameObject
-from platforms import Platform
+from abstract_classes.platforms import Platform
 from abstract_classes.enemy import Enemy
 from bullet import Bullet
 from explosion import Explosion
+
+from platform_classes.savepoint import Savepoint
+from platform_classes.upgradepoint import Upgradepoint
+from platform_classes.wall import Wall
 
 from enemy_classes.bird import Bird
 from enemy_classes.coldBird import ColdBird
@@ -51,6 +55,9 @@ class WorldManager(GameObject):
     # delete all entities
     def empty_stage(self):
         Platform.platforms = []
+        Wall.walls = []
+        Upgradepoint.upgradepoints = []
+        Savepoint.savepoints = []
         Enemy.enemies = []
         Bullet.bullets = []
         Explosion.explosions = []
@@ -64,11 +71,11 @@ class WorldManager(GameObject):
         for row in stage:
             for value in row:
                 if value == "W":
-                    Platform(wall_x, wall_y, 30, "platform")
+                    Wall(wall_x, wall_y, 30)
                 elif value == "U":
-                    Platform(wall_x + 5, wall_y + 5, 15, "upgrade")
+                    Upgradepoint(wall_x + 5, wall_y + 5, 15)
                 elif value == "L":
-                    Platform(wall_x + 5, wall_y + 5, 15, "load")
+                    Savepoint(wall_x + 5, wall_y + 5, 15)
                 wall_x += 30
             wall_y += 30
             wall_x = 0
