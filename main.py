@@ -120,7 +120,7 @@ def main():
     menuManager = MenuManager()
 
     save_text = PersistentTextBox("Your progress has been saved.", medium_font, (255, 255, 100))
-    exit_text = PersistentTextBox("Exit is cloed until the boss is defeated.", medium_font, (255, 100, 100)) 
+    exit_text = PersistentTextBox("Exit is closed until the boss is defeated.", medium_font, (255, 100, 100)) 
 
     # menu loop
     while True:
@@ -237,7 +237,7 @@ def main():
 
             # if bullet shot by the player, checks collision againt enemies
             if bullet.owner == "player":
-                for enemy in Entity.enemies:
+                for enemy in Enemy.enemies:
                     if bullet.rect.colliderect(enemy.rect):
                         enemy.current_health -= bullet.damage + (gold/100)
                         will_die = True
