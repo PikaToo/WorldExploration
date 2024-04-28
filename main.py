@@ -39,6 +39,7 @@ world = level.level()
 #
 # TODO: make it so bosses actually die
 # TODO: iframe color change
+# TODO: make it so player loads to desired load code position
 #
 # save point(s) near tutorial area
 #
@@ -154,6 +155,8 @@ def main():
         else:
             healthManager.reset_health()
             saveManager.load_data(player)
+            worldManager.empty_level()
+            worldManager.create_level(world)
 
         # building the stage
         if worldManager.world_changed:
@@ -226,10 +229,9 @@ def main():
                 uiManager.enable_exit_text()
             player.stop_escape()
 
-        # bad that player save like this TODO: fix
-        if player.save != 0:
+        # bad that player save like this
+        if saveManager.check_for_save(Platform.platforms, player):
             saveManager.save_data(player)
-            player.save = 0
             uiManager.enable_save_text()
             healthManager.reset_health()
         

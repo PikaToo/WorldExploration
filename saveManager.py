@@ -13,6 +13,13 @@ class SaveManager(GameObject):
         self.gold = 0
         self.player_position = (100, 550)
 
+    def check_for_save(self, platforms, player):
+        for platform in platforms:
+            if platform.type == "load":
+                if player.rect.colliderect(platform.rect):
+                    return True
+        return False
+
     # overwrites old save data with new data from GameObject
     def save_data(self, player):
         self.world_x = GameObject.world_x        
