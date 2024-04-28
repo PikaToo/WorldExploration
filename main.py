@@ -7,7 +7,6 @@ from pygame.locals import *
 from abilityStatusList import AbilityStatusList
 from persistentTextBox import PersistentTextBox
 from gameObject import GameObject
-from entity import Entity
 from enemy import Enemy
 from explosion import Explosion
 from bullet import Bullet
@@ -50,7 +49,8 @@ save_point = (0, boss_statuses, ability_statuses, 0)   # point, bosses, abilitie
 
 # TODO:
 # fix rest of OOP
-#  fix fade-in from upgrade
+#
+# save point(s) near tutorial area
 #
 # cannon enemy
 #
@@ -98,6 +98,9 @@ def load_game(save_data, player):
     if save_data[0] == 2:
         GameObject.world_x = 2
         GameObject.world_y = 7
+    if save_data[0] == 97:
+        GameObject.world_x = 5
+        GameObject.world_y = 3
     if save_data[0] == 98:
         GameObject.world_x = 0
         GameObject.world_y = 8
@@ -150,6 +153,10 @@ def main():
     # color values (pink) incase none was assigned.
     background_color = (255, 100, 100)
 
+    # update after loading
+    GameObject.set_ability_statuses(ability_statuses)
+    GameObject.set_boss_statuses(boss_statuses)
+    
     # initial values
     worldManager.create_level(world)
     
@@ -172,6 +179,7 @@ def main():
         key = pygame.key.get_pressed()  # exit through escape
         pauseManager.check_for_pause(key[K_ESCAPE], Platform.platforms, player)
         if pauseManager.manually_paused or pauseManager.upgrader_paused:
+            
             # fading in
             fader.darken_fade()
             fader.display()
@@ -195,6 +203,7 @@ def main():
 
         # building the stage
         if worldManager.world_changed:
+
             # fade to black
             fader.set_darkest_fade()
             

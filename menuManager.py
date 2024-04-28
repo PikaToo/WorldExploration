@@ -87,7 +87,8 @@ class LoadMenu(GameObject):
         # temp_code = 9901 1111 1111 1111 0000 0000
         # self.code = "990011111111111100000000"
         # self.code = "980011111111100000000000"
-        self.code = "980011111111111000000000"
+        # self.code = "980011111111111000000000"
+        self.code = "971111111111111000000000"
         self.message = "Enter your load code."
 
     # function that runs when asked to input a load: used after main menu. 
