@@ -11,14 +11,14 @@ class MenuManager():
         self.load_menu = LoadMenu() 
         self.menu_shown = "Main"
 
-    def display(self, events, font):
+    def display(self, events):
         # if we're meant to show the main menu, show it and get what we show next frame
         if self.menu_shown == "Main":
-            self.menu_shown = self.main_menu.display(font)
+            self.menu_shown = self.main_menu.display()
 
         # if we're meant to show the load menu, show it and get what we show next frame
         elif self.menu_shown == "Load":
-            self.menu_shown = self.load_menu.display(events, font)
+            self.menu_shown = self.load_menu.display(events)
 
         # in other cases we don't display anything
     
@@ -42,7 +42,7 @@ class MainMenu(GameObject):
         self.back_new_rect = pygame.Rect(x_location - 5, 495, 195, 60)
         self.back_load_rect = pygame.Rect(x_location + 295,  495, 195, 60)
 
-    def display(self, font):
+    def display(self):
         mouse_x, mouse_y = pygame.mouse.get_pos()                   # getting mouse pos for collision checks later
         mouse_rect = pygame.Rect(mouse_x, mouse_y, 1, 1)
 
