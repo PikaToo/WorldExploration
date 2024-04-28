@@ -8,7 +8,7 @@ from gameObject import GameObject
 from enemy import Enemy
 from explosion import Explosion
 from bullet import Bullet
-from platformManager import Platform
+from platforms import Platform
 from player import Player
 from fadeManager import FadeManager
 from healthManager import HealthManager

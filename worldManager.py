@@ -1,5 +1,5 @@
 from gameObject import GameObject
-from platformManager import Platform
+from platforms import Platform
 from enemy import Enemy
 from bullet import Bullet
 from explosion import Explosion

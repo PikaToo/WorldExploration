@@ -1,5 +1,5 @@
 import pygame
-from platformManager import Platform   # entities need to know platform locations
+from platforms import Platform   # entities need to know platform locations
 from gameObject import GameObject
 
 class Entity(GameObject):
