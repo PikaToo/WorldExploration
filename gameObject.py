@@ -14,6 +14,8 @@ class GameObject(object):
     ability_statuses = AbilityStatusList()
     boss_statuses = []
 
+    gold = 0
+
     def __init__(self):
         pass
 
@@ -39,3 +41,7 @@ class GameObject(object):
     @staticmethod
     def set_boss_statuses(boss_statuses):
         GameObject.boss_statuses = boss_statuses
+    
+    @staticmethod
+    def set_gold(gold):
+        GameObject.gold = gold

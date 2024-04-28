@@ -18,6 +18,7 @@ from pauseManager import PauseManager
 from worldManager import WorldManager
 from fpsDisplay import FpsDisplay
 from menuManager import MenuManager
+from goldManager import GoldManager
 
 SAVE_FILE = "save_data/save_data.txt"
 
@@ -121,6 +122,7 @@ def main():
     fpsDisplay = FpsDisplay()
     player = Player()
     menuManager = MenuManager()
+    goldManager = GoldManager()
 
     save_text = PersistentTextBox("Your progress has been saved.", medium_font, (255, 255, 100))
     exit_text = PersistentTextBox("Exit is closed until the boss is defeated.", medium_font, (255, 100, 100)) 
@@ -215,7 +217,7 @@ def main():
         player.exit_status = True
         for enemy in Enemy.enemies:
             if enemy.current_health <= 0:                            # if death is true, does some things
-                gold += enemy.gold
+                goldManager.gain_gold(enemy.gold)
                 Explosion(enemy.rect.x + (enemy.rect.width / 2), enemy.rect.y + (enemy.rect.height / 2), enemy.gold + 1)
                 if enemy.boss != -1:
                     boss_statuses[enemy.boss] = False
@@ -248,7 +250,7 @@ def main():
             if bullet.owner == "player":
                 for enemy in Enemy.enemies:
                     if bullet.rect.colliderect(enemy.rect):
-                        enemy.current_health -= bullet.damage + (gold/100)
+                        enemy.current_health -= bullet.damage + (goldManager.current_gold()/100)
                         will_die = True
 
             # if bullet shot by an enemy, checks collision against player
@@ -296,8 +298,7 @@ def main():
         
         level = (chr(65 + GameObject.world_x) + str('%02d' % (GameObject.world_y + 1)))           # getting level value from numbers
         GameObject.window.blit(small_font.render(level, False, (255, 255, 255)), (1171, 575))          # levels
-        GameObject.window.blit(small_font.render((str(gold)+"g"), False, (255, 255, 50)), (5, 575))    # gold
-
+        goldManager.display_overlay(small_font)
 
         # DEBUG: shows  FPS if backspace is pressed
         fpsDisplay.display(fpsClock, font)
