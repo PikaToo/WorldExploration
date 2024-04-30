@@ -37,11 +37,10 @@ world = level.level()
 # TODO:
 # fix rest of OOP
 #
-# TODO: iframe color change
-# TODO: make it so player loads to desired load code position
-# TODO: platform sub-types 
-# TODO: bosses unique health bars
-# TODO: fix enemies being able to jump you immediately
+# TODO: little circle particles once no longer invincible 
+# TODO: make it so player loads to desired load code position 
+# TODO: bosses unique health bars 
+# TODO: fix enemies being able to jump you immediately 
 #
 # save point(s) near tutorial area
 #
@@ -190,7 +189,7 @@ def main():
         for explosion in Explosion.explosions:
             explosion.move()
         player.update()
-        healthManager.update()
+        healthManager.update(player)
 
         # if exits are closed, shows text and prevents movement if player tries to leave bounds
         if not player.exit_status:

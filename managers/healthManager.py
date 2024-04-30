@@ -8,8 +8,8 @@ class HealthManager(GameObject):
         self.invincibility_frames = 0
         self.healthOverlay = HealthOverlay()
 
-    def update(self):
-        # tick down invincinility frames
+    def update(self, player):
+        # tick down invincibility frames
         if self.invincibility_frames > 0:
             self.invincibility_frames -= 1
         
@@ -21,6 +21,9 @@ class HealthManager(GameObject):
 
         # update overlay
         self.healthOverlay.update(self.current_health, self.max_health)
+
+        # give player desired color
+        player.color = (self.invincibility_frames, self.invincibility_frames, 255) 
 
     # reduces health by set damage if not invincible
     def take_damage(self, damage):
