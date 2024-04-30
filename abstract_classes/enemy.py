@@ -28,7 +28,6 @@ class Enemy(Entity):
                 if self.x_velocity < 0:
                     self.rect.left = platform.rect.right
 
-
     def apply_standard_y_movement(self):
         enemy_on_ground = False
         self.rect.y += self.y_velocity
@@ -49,13 +48,14 @@ class Enemy(Entity):
     
 
     def draw_health_bar(self):
-        # getting health bar rect
+        # getting health bar dimensions
         bar_height = 5 + (self.max_health / 5)
         bar_x_pos = self.rect.x - 5
         bar_y_pos = self.rect.y - 2 - bar_height 
         bar_x_width = self.rect.width + 10
         bar_y_width = bar_height 
 
+        # getting health bar rect
         back_bar = pygame.Rect(bar_x_pos, bar_y_pos, bar_x_width, bar_y_width)
         front_bar = pygame.Rect(bar_x_pos, bar_y_pos, bar_x_width * self.current_health / self.max_health, bar_y_width)
 
