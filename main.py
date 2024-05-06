@@ -34,13 +34,11 @@ pygame.display.set_icon(icon)
 
 world = level.level()
 
-# TODO:
-# fix rest of OOP
-#
 # TODO: little circle particles once no longer invincible 
 # TODO: make it so player loads to desired load code position 
 # TODO: bosses unique health bars 
 # TODO: fix enemies being able to jump you immediately 
+# TODO: better saving system
 #
 # save point(s) near tutorial area
 #
