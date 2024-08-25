@@ -28,7 +28,7 @@ class Minimap(GameObject):
                             if value == "L":
                                 self.load_zones.append(block)
                             else:
-                                if boss_statuses[int(value)]:  # boss only added if alive
+                                if boss_statuses.list_form()[int(value)]:  # boss only added if alive
                                     self.boss_zones.append(block)
                         map_x += 1
                     map_x -= 40

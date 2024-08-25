@@ -35,7 +35,7 @@ class PauseManager(GameObject):
         self.holding_escape = pressing_escape
 
 
-    def display(self, world, font, medium_font, small_font):
+    def display(self, world):
         if self.manually_paused:
             # showing pause text
             GameObject.window.blit(font.render("Paused.", False, (255, 255, 255)), (50, 200))
